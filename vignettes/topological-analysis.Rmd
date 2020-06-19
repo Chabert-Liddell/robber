@@ -1,0 +1,131 @@
+---
+title: "Topological Analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Topological Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(robber)
+```
+
+In what follows, we will use \code{robber} to illustrate how different 
+set of parameters of block models, representing differents topologies of 
+network has an influence on the robustness of bipartite ecological networks.
+
+We will compare set of networks that all have the same number of rows,
+columns and density. We select those numbers such that the maximum number for
+the robustness with uniform extinctions is approximately 0.5.
+
+```{r set_constant}
+dens <- .0156
+nr <-  100
+nc <- 100
+rob_er <- auc_robustness_lbm(matrix(dens, 1,1), 1, 1, nr, nc)
+rob_er
+```
+
+```{r echo=FALSE}
+mod <- matrix(c("a", 1, 1, "a"), 2, 2)
+cp  <- matrix(c("a", "a", "a", 1), 2, 2)
+```
+
+We will consider 2 blocks of row species and 2 blocks of column species. 
+The parameters will be as followed:
+
+* $\pi$ The row blocks parameter will be set to [1/4, 3/4]
+    
+* $\rho$ The column blocks parameter will vary
+    
+* **con** The connectivity parameters between blocks will be set to 
+    represent 2 classic topologies: 
+    
+    + __Modular__ the shape of the connectivity matrix will be as follows:
+   
+```{r echo=FALSE}
+     knitr::kable(mod)
+```
+
+*     
+    + __Nested__ A classic Core-periphery with or without strong connection
+        between the core and the periphery depending on the parameters:
+
+```{r echo=FALSE}
+     knitr::kable(cp)
+``` 
+
+```{r parameters}
+pi <- c(1/4, 3/4)
+```
+
+
+```{r analyse_artice}
+robust_topology <- tibble::tibble()
+eps <- c(1/seq(8, 1.5, by = -.5), seq(1, 8, by = .5))
+for(i in seq(19)) {
+  rho <- c(i*.05, (20-i)*.05)
+  list_con_mod <- lapply( eps,
+                          function(j) {
+                            list(con = matrix(c(j, 1,
+                                                1, j), 2, 2),
+                                 pi = pi,
+                                 rho = rho)})
+  rob_mod <- purrr::map_dfc(
+    .x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
+    .f = function(x) 
+      unlist(compare_robustness(list_param = list_con_mod, 
+                                dens = dens, 
+                                new_nr = nr, 
+                                new_nc = nc, 
+                                ext_seq = x))) %>%  
+    dplyr::mutate(Topology = "Modular", 
+                  rho = rho[1], 
+                  j = seq_along(eps))
+  list_con_nest <- lapply( eps,
+                           function(j) {
+                             list(con = matrix(c(j, j,
+                                                 j, 1), 2, 2),
+                                  pi = pi,
+                                  rho = rho)})
+  rob_nest <- purrr::map_dfc(.x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
+                             .f = function(x) 
+                               unlist(compare_robustness(list_param = list_con_mod, 
+                                                         dens = dens, 
+                                                         new_nr = nr, 
+                                                         new_nc = nc, 
+                                                         ext_seq = x))) %>%  
+    dplyr::mutate(Topology = "Nested", 
+                  rho = rho[1], 
+                  j = seq_along(eps))
+  robust_topology <- dplyr::bind_rows(robust_topology, rob_mod, rob_nest)
+}
+```
+
+
+
+```{r print_article}
+robust_topology %>%
+  tidyr::pivot_longer(cols = c("uniform", "increasing", "decreasing"), 
+                      names_to = "Extinction", 
+                      values_to = "Robustness") %>%
+  ggplot2::ggplot(ggplot2::aes(x = j, y = rho)) +
+  ggplot2::geom_tile(ggplot2::aes(fill = Robustness)) +
+  ggplot2::facet_grid(Topology  ~ Extinction) +
+  ggplot2::scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                                midpoint = rob_er, 
+                                ggplot2::guide_colorbar(title = "AUC(R)")) +
+  ggplot2::annotate(x = 15, y = .5, geom = "point", col = "black", size = 4) +
+  ggplot2::scale_x_continuous(breaks = c(0, 7, 15, 22, 30), 
+                              labels = c(1/8, 1/4, 1, 4, 8)) +
+  ggplot2::theme_minimal()
+#ggsave(filename = "robust_topology_heatmap.png")
+```

@@ -1,13 +1,18 @@
 Package: robber
-Title: What the Package Does (One Line, Title Case)
+Title: Using Block Model to estimate the Robustness of Ecological Network
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Saint-Clair",
+           family = "Chabert-Liddell",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           email = "saint-clair.chabert-liddell@agroparistech.fr",
+           comment = c(ORCID = "0000-0001-5604-7308"))
+Description: This package use the Stochastic Block Model and its bipartite
+    counterpart, the Latent Block Model to compute the robustness of ecological
+    networks with binary interactions. By setting a parametric model on the 
+    network, it allows the comparison of the robustness of networks differing 
+    in size and connectance. It also deals with networks that are partially 
+    sampled or with missing values.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -17,5 +22,24 @@ URL: https://github.com/Chabert-Liddell/robber
 BugReports: https://github.com/Chabert-Liddell/robber/issues
 Suggests: 
     testthat,
-    spelling
+    spelling,
+    knitr,
+    rmarkdown
 Language: en-US
+LinkingTo: 
+    Rcpp
+Imports: 
+    Rcpp,
+    blockmodels (>= 1.1.2),
+    GREMLIN (>= 0.1.1),
+    igraph,
+    purrr,
+    magrittr,
+    tidyr,
+    dplyr,
+    ggplot2,
+    tibble
+Remotes: 
+    jb-leger/blockmodels,
+    Demiperimetre/GREMLIN@missingData
+VignetteBuilder: knitr
