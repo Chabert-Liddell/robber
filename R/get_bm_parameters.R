@@ -68,6 +68,7 @@ get_lbm_param <- function(A, model_size = NULL, ...) {
                 ncol(my_lbm$memberships[[i]]$Z1) == model_size[1] &
                   ncol(my_lbm$memberships[[i]]$Z2) == model_size[2]
                 }) == TRUE))
+    if (purrr::is_empty(model_size)) return(NULL)
     return(list(con = my_lbm$model_parameters[[model_size]]$pi,
                 pi = colMeans(my_lbm$memberships[[model_size]]$Z1),
                 rho = colMeans(my_lbm$memberships[[model_size]]$Z2),

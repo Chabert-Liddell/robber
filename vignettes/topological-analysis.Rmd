@@ -16,6 +16,11 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(robber)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(tibble)
 ```
 
 In what follows, we will use \code{robber} to illustrate how different 
@@ -33,6 +38,42 @@ nc <- 100
 rob_er <- auc_robustness_lbm(matrix(dens, 1,1), 1, 1, nr, nc)
 rob_er
 ```
+
+Robber compute the robustness as the AUC of the robustness function integrated over
+all possible networks which arise from the same set of Block Model parameters.
+For example using the above parameters of a network with not particular structure,
+the black line is the average of all the dashed line which are the robustness function
+of particular realization of networks issued from the same distribution:
+
+```{r}
+rob_fun <- lapply(
+  X = seq_len(10),
+  FUN = function(i) {
+    A <- simulate_lbm(con = matrix(dens, 1, 1), 
+                      pi = 1, 
+                      rho = 1, 
+                      nr = nr, 
+                      nc = nc)$A
+    robustness_emp(A)$fun
+  }
+)
+bind_cols(rob_fun) %>% 
+  mutate(`Primary Extinctions` = seq.int(0, nr)/nr) %>% 
+  pivot_longer(cols = - `Primary Extinctions`,
+               names_to = "Net",
+               values_to = "Robustness") %>% 
+  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
+  geom_step(linetype = "dashed", show.legend = FALSE) +
+  annotate("step", x = seq.int(0, nr)/nr, 
+           y = robustness_lbm(matrix(dens, 1,1), 1, 1, nr, nc)$fun,
+           size = 2) +
+  theme_minimal(base_size = 15)
+
+# ggsave("rob_function.png", path = "~/Documents/robustness/robustness/image/",
+       width = 6, height = 4)
+```
+
+
 
 ```{r echo=FALSE}
 mod <- matrix(c("a", 1, 1, "a"), 2, 2)
@@ -68,7 +109,7 @@ pi <- c(1/4, 3/4)
 ```
 
 
-```{r analyse_artice}
+```{r analyse_article}
 robust_topology <- tibble::tibble()
 eps <- c(1/seq(8, 1.5, by = -.5), seq(1, 8, by = .5))
 for(i in seq(19)) {
@@ -98,7 +139,7 @@ for(i in seq(19)) {
                                   rho = rho)})
   rob_nest <- purrr::map_dfc(.x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
                              .f = function(x) 
-                               unlist(compare_robustness(list_param = list_con_mod, 
+                               unlist(compare_robustness(list_param = list_con_nest, 
                                                          dens = dens, 
                                                          new_nr = nr, 
                                                          new_nc = nc, 
@@ -123,9 +164,234 @@ robust_topology %>%
   ggplot2::scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                                 midpoint = rob_er, 
                                 ggplot2::guide_colorbar(title = "AUC(R)")) +
-  ggplot2::annotate(x = 15, y = .5, geom = "point", col = "black", size = 4) +
+  ggplot2::annotate(x = 15, y = .5, geom = "point", col = "black", size = 3) +
+  ggplot2::annotate(x = 15, y = .55, geom = "text", label = "ER",
+                    col = "black", size = 3) +
   ggplot2::scale_x_continuous(breaks = c(0, 7, 15, 22, 30), 
                               labels = c(1/8, 1/4, 1, 4, 8)) +
-  ggplot2::theme_minimal()
-#ggsave(filename = "robust_topology_heatmap.png")
+  ggplot2::coord_fixed(ratio = 30) +
+  ggplot2::theme_classic(base_size = 15)
+# ggsave(filename = "robust_topology_heatmap.png",  path = "~/Documents/robustness/robustness/image/", height = 6, width = 9)
+```
+
+
+## Testing the variance of the MC robustness and the LBM robustness from simulated LBM networks
+
+```{r}
+n_iter <- 300
+pi <- c(.1,.9)
+rho <- c(.2,.8)
+con <- matrix(c(.8, .4, .4, .1), 2, 2)
+con <- 0.1*con/as.vector(pi%*%con%*%rho)
+nr <- 100
+nc <- 100
+res <- pbmcapply::pbmclapply(
+  X = seq(500),
+  FUN = function(i) {
+    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
+    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+    par <- get_lbm_param(G$A)
+    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+    return(tibble(type = "cp", mc = auc_mc, lbm = auc_lbm ))
+  }, mc.cores = 8
+)
+res_cp <- bind_rows(res)
+
+n_iter <- 300
+pi <- 1
+rho <- 1
+con <- matrix(0.1, 1, 1)
+nr <- 100
+nc <- 100
+res <- pbmcapply::pbmclapply(
+  X = seq(500),
+  FUN = function(i) {
+    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
+    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+    par <- get_lbm_param(G$A)
+    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+    return(tibble(type = "er", mc = auc_mc, lbm = auc_lbm ))
+  }, mc.cores = 8
+)
+res_er <- bind_rows(res)
+
+pi  <- c(.2, .8)
+rho <- c(.9, .1)
+con <- matrix(c(.6, .1, .2, .2), 2, 2)
+con <- 0.1*con/as.vector(pi%*%con%*%rho)
+res <- pbmcapply::pbmclapply(
+  X = seq(500),
+  FUN = function(i) {
+    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
+    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+    par <- get_lbm_param(G$A)
+    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+    return(tibble(type = "mod", mc = auc_mc, lbm = auc_lbm ))
+  }, mc.cores = 8
+)
+res_mod <- bind_rows(res)
+```
+
+
+```{r}
+res %>% 
+  pivot_longer(cols = everything(), names_to = "Method", values_to = "Robustness") %>% 
+  ggplot(aes(x = Robustness, fill = Method)) +
+  geom_density(alpha = .2) +
+  geom_vline(xintercept =  robustness_lbm(con, pi, rho, nr, nc)$auc)
+```
+
+```{r}
+bind_rows(res_cp, res_mod, res_er) %>% 
+  pivot_longer(cols = - type, names_to = "Method", values_to = "Robustness") %>% 
+  filter(Method == "mc") %>% 
+  ggplot(aes(x = Robustness, fill = type)) +
+  geom_density(alpha = .2) +
+  ylab(label = "") +
+#  geom_vline(xintercept =  robustness_lbm(con, pi, rho, nr, nc)$auc) +
+  theme_minimal(base_size = 15)
+```
+```{r}
+n_iter <- 300
+nr <- 100
+nc <- 100
+
+pi <- c(.1,.9)
+rho <- c(.2,.8)
+con <- matrix(c(.8, .4, .4, .1), 2, 2)
+con <- 0.1*con/as.vector(pi%*%con%*%rho)
+pi <- nr * pi
+rho <- nc * rho
+con <- round(outer(pi, rho) * con)
+
+res <- pbmcapply::pbmclapply(
+  X = seq(500),
+  FUN = function(i) {
+    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con, method = "gnm")
+    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+    par <- get_lbm_param(G$A)
+    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+    return(tibble(type = "cp", mc = auc_mc, lbm = auc_lbm ))
+  }, mc.cores = 8
+)
+res_cp_gnm <- bind_rows(res)
+
+pi <- 1
+rho <- 1
+con <- matrix(0.1, 1, 1)
+pi <- nr * pi
+rho <- nc * rho
+con <- round(outer(pi, rho) * con)
+res <- pbmcapply::pbmclapply(
+  X = seq(500),
+  FUN = function(i) {
+    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con, method = "gnm")
+    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+    par <- get_lbm_param(G$A)
+    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+    return(tibble(type = "er", mc = auc_mc, lbm = auc_lbm ))
+  }, mc.cores = 8
+)
+res_er_gnm <- bind_rows(res)
+
+pi  <- c(.2, .8)
+rho <- c(.9, .1)
+con <- matrix(c(.6, .1, .2, .2), 2, 2)
+con <- 0.1*con/as.vector(pi%*%con%*%rho)
+pi <- nr * pi
+rho <- nc * rho
+con <- round(outer(pi, rho) * con)
+res <- pbmcapply::pbmclapply(
+  X = seq(500),
+  FUN = function(i) {
+    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con, method = "gnm")
+    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+    par <- get_lbm_param(G$A)
+    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+    return(tibble(type = "mod", mc = auc_mc, lbm = auc_lbm ))
+  }, mc.cores = 8
+)
+res_mod_gnm <- bind_rows(res)
+```
+
+
+```{r}
+pi <- c(.1,.9)
+rho <- c(.2,.8)
+con <- matrix(c(.8, .4, .4, .1), 2, 2)
+con <- 0.1*con/as.vector(pi%*%con%*%rho)
+var_auc_unif_lbm(con, pi, rho, nr, nc)
+```
+```{r}
+bind_rows(res_cp_gnm, res_mod_gnm, res_er_gnm) %>% 
+  pivot_longer(cols = - type, names_to = "Method", values_to = "Robustness") %>% 
+  filter(Method == "mc") %>% 
+  ggplot(aes(x = Robustness, fill = type)) +
+  geom_density(alpha = .2) #+
+ # geom_vline(xintercept =  robustness_lbm(con, pi, rho, nr, nc)$auc)
+```
+```{r}
+bind_rows(res_cp_gnm, res_mod_gnm, res_er_gnm) %>% 
+  mutate(Model = "Microcanonical") %>% 
+  bind_rows(
+    bind_rows(res_cp, res_mod, res_er) %>% 
+      mutate(Model = "Canonical")) %>% 
+  pivot_longer(cols = - c(type, Model), names_to = "Method", values_to = "Robustness") %>% 
+#  rename(Topology = type) %>% 
+  mutate(
+    Topology = case_when(
+      type == "cp" ~ "Nested",
+      type == "er" ~ "ER",
+      type == "mod" ~ "Modular"
+    )) %>% 
+  filter(Method == "mc") %>% 
+  ggplot(aes(x = Robustness, fill = Topology, color = Topology)) +
+  geom_density(alpha = .2) +
+  ylab(label = "") +
+  facet_wrap(~ Model) +
+  theme_bw(base_size = 15)
+ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/",
+       width = 8, height = 4.5)
+```
+
+```{r}
+bind_rows(res_cp_gnm, res_mod_gnm, res_er_gnm) %>% 
+  mutate(Model = "Microcanonical") %>% 
+  bind_rows(
+    bind_rows(res_cp, res_mod, res_er) %>% 
+      mutate(Model = "Canonical")) %>% 
+  pivot_longer(cols = - c(type, Model), names_to = "Method", values_to = "Robustness") %>% 
+  group_by(type, Model, Method) %>% 
+  summarise(mean(Robustness))
+```
+
+Normalite asymptotique :
+```{r}
+#n_iter <- 300
+pi <- c(.2,.8)
+rho <- c(.2,.8)
+con <- matrix(c(.8, .4, .4, .1), 2, 2)
+con <- 0.03*con/as.vector(pi%*%con%*%rho)
+nr <- 800
+nc <- 250
+res <- pbmcapply::pbmclapply(
+  X = seq(1000),
+  FUN = function(i) {
+    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
+#    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+    par <- get_lbm_param(G$A)
+    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+    auc_dec <- robustness_lbm(par$con, par$pi, par$rho, nr, nc, ext_seq = "decreasing")$auc
+    return(tibble(type = "cp", dec = auc_dec, lbm = auc_lbm ))
+  }, mc.cores = 8
+)
+res_an <- bind_rows(res)
+```
+
+```{r}
+bind_rows(res_an) %>% 
+  pivot_longer(cols = - type, names_to = "Method", values_to = "Robustness") %>% 
+#  filter(Method == "mc") %>% 
+  ggplot(aes(x = Robustness, fill = Method)) +
+  geom_density(alpha = .2) #+
 ```

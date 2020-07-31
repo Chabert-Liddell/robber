@@ -1,0 +1,686 @@
+---
+title: "Network Comparison"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Network Comparison}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(robber)
+library(ggplot2)
+library(purrr)
+library(tibble)
+library(dplyr)
+library(stringr)
+library(tidyr)
+```
+
+We load a collection of all the Seed-Dispersal, Host-Parasite and Plant-Pollinator
+of the Web of Life dataset (www.web-of-life.es). All networks have been binarized.
+```{r}
+data("web_of_life", package = "robber")
+```
+
+For all these bipartite networks, we will compute the empirical robustness and
+the robustness by block model and its variance for uniform extinction sequences.
+For example:
+```{r}
+rob_emp <- robustness_emp(web_of_life[[100]]$net)
+param <- get_lbm_param(web_of_life[[100]]$net)
+rob_bm <- do.call(robustness_lbm, param)
+var_rob <- do.call(var_auc_unif_lbm, param)
+tb_robustness <- tibble::tibble( 
+                    id = web_of_life[[100]]$id,
+                    Empirical = rob_emp$auc, 
+                    BM = rob_bm$auc, 
+                    Variance = var_rob,
+                    nr = web_of_life[[100]]$nr,
+                    nc = web_of_life[[100]]$nc,
+                    dens = web_of_life[[100]]$dens)
+
+print(tb_robustness)
+```
+
+And compare the robustness the empirical and Block Model robustness function:
+```{r}
+ggplot2::ggplot(data.frame(x = seq(0, tb_robustness$nr)/tb_robustness$nr,
+                           Empirical = rob_emp$fun,
+                           BM = rob_bm$fun),
+                ggplot2::aes(x = x, y = Empirical)) +
+  ggplot2::geom_step(col = "red") + 
+  ggplot2::geom_step(ggplot2::aes(y = BM), linetype = "dashed", col = "blue")
+```
+
+
+
+We can also compute the robustness by block model for other extinctions sequences:
+```{r}
+rob_bm_inc <- do.call(robustness_lbm, c(param, ext_seq = "increasing"))
+rob_bm_dec <- do.call(robustness_lbm, c(param, ext_seq = "decreasing"))
+print(c(rob_bm_dec$auc, rob_bm$auc, rob_bm_inc$auc))
+```
+
+
+```{r}
+nb_cores <- parallel::detectCores()/2
+if( is.null(nb_cores)) nb_cores <- 1
+tb_robustness_wol <- pbmcapply::pbmclapply(
+  X = seq_along(web_of_life),
+  FUN = function(i) {
+    if (web_of_life[[i]]$nr + web_of_life[[i]]$nc > 1000) return(NULL)
+    rob_emp <- robustness_emp(web_of_life[[i]]$net)$auc
+    param <- get_lbm_param(web_of_life[[i]]$net)
+    rob_bm <- do.call(robustness_lbm, param)$auc
+    rob_bm_inc <- do.call(robustness_lbm, c(param, ext_seq = "increasing"))$auc
+    rob_bm_dec <- do.call(robustness_lbm, c(param, ext_seq = "decreasing"))$auc
+    var_rob <- do.call(var_auc_unif_lbm, param)
+    tb_tmp <- tibble::tibble(id = web_of_life[[i]]$id, 
+                   Empirical = rob_emp, 
+                   BM = rob_bm, 
+                   Variance = var_rob,
+                   nr = web_of_life[[i]]$nr,
+                   nc = web_of_life[[i]]$nc,
+                   dens = web_of_life[[i]]$dens,
+                   BM_inc = rob_bm_inc,
+                   BM_dec = rob_bm_dec,
+                   emp_inc = robustness_emp(web_of_life[[i]]$net, ext_seq = "increasing")$auc,
+                   emp_dec = robustness_emp(web_of_life[[i]]$net, ext_seq = "decreasing")$auc,
+                   bm_norm_unif = unlist(compare_robustness(list(param),ext_seq = "uniform")),
+                   bm_norm_dec = unlist(compare_robustness(list(param),ext_seq = "decreasing")),
+                   bm_norm_inc = unlist(compare_robustness(list(param),ext_seq = "increasing")),
+                   K = nrow(param$con),
+                   Q = ncol(param$con)
+                   )
+    return(tb_tmp)
+    # if (stringr::str_sub(web_of_life[[i]]$id, 1, 1) != "M") return(tb_tmp)
+    # rob_emp <- robustness_emp(t(web_of_life[[i]]$net))$auc
+    # param <- get_lbm_param(t(web_of_life[[i]]$net))
+    # rob_bm <- do.call(robustness_lbm, param)$auc
+    # rob_bm_inc <- do.call(robustness_lbm, c(param, ext_seq = "increasing"))$auc
+    # rob_bm_dec <- do.call(robustness_lbm, c(param, ext_seq = "decreasing"))$auc
+    # var_rob <- do.call(var_auc_unif_lbm, param)
+    # tb_tmp <- dplyr::bind_rows(
+    #   tb_tmp,
+    #   tibble::tibble(id = paste(strsplit(web_of_life[[i]]$id, NULL)[[1]][c(1:2,4:3, 5:length(strsplit(web_of_life[[i]]$id, NULL)[[1]]))], collapse=''), 
+    #                  Empirical = rob_emp, 
+    #                  BM = rob_bm, 
+    #                  Variance = var_rob,
+    #                  nr = web_of_life[[i]]$nc,
+    #                  nc = web_of_life[[i]]$nr,
+    #                  dens = web_of_life[[i]]$dens,
+    #                  BM_inc = rob_bm_inc,
+    #                  BM_dec = rob_bm_dec,
+    #                  emp_inc = robustness_emp(t(web_of_life[[i]]$net), ext_seq = "increasing")$auc,
+    #                  emp_dec = robustness_emp(t(web_of_life[[i]]$net), ext_seq = "decreasing")$auc))
+  }, mc.cores = nb_cores
+)
+tb_robustness_wol <- dplyr::bind_rows(tb_robustness_wol)
+```
+```{r}
+tb_robustness_wol %>% 
+  mutate("# Std Deviation" = abs(Empirical - BM)/sqrt(Variance),
+         "Empty Column" = (1-dens)**nr) %>% 
+  filter(nr >10 & nc >10) %>% 
+  filter(! str_sub(id, 3, 4) %in% c("DS", "LP")) %>% 
+  group_by(`# Std Deviation`,   
+           `Empty Column`) %>% 
+  ggplot(aes(y = abs(Empirical - BM)/Empirical,  
+           x = `Empty Column`)) +
+  geom_point()
+
+```
+
+```{r}
+tb_robustness_wol %>% 
+  mutate("# Std Deviation" = abs(Empirical - BM)/sqrt(Variance),
+         "Empty Column" = (1-dens)**nr) %>% 
+  dplyr::filter(nr>10 & nc>10) %>% 
+  ggplot2::ggplot(ggplot2::aes(x = Empirical, y = BM, 
+                               size = `# Std Deviation`, 
+                               col = `Empty Column`)) +
+  ggplot2::geom_abline(slope = 1, intercept = 0) + 
+  ggplot2::geom_point(alpha = .5) +
+  ggplot2::scale_color_gradient( low = "grey50", high = "red") +
+  ggplot2::xlim(c(0.5,1)) + 
+  ggplot2::ylim(c(0.5,1)) +
+  ggplot2::xlab(label = "AUC(R) by Monte Carlo") + 
+  ggplot2::ylab(label = "AUC(R) by LBM Expectation") +
+  ggplot2::coord_fixed() +
+  ggplot2::theme_minimal(base_size = 15, base_rect_size = .25)
+#ggsave("wol_goodness_of_fit.png", path = "~/Documents/robustness/robustness/image/",
+       width = 8, height = 6)
+```
+
+
+We select the subset of networks where the Robustness by block model has the better
+fit on the empirical Robustness:
+
+```{r}
+tb_sub <- tb_robustness_wol %>% 
+  dplyr::filter((1-dens)**nr <.1 & nr > 10 & nc > 10) %>% 
+  dplyr::filter(abs(Empirical - BM)/sqrt(Variance) < 1)
+```
+
+
+
+```{r}
+tb_na_pred <- pbmcapply::pbmclapply(
+  X = seq_along(web_of_life),
+  FUN = function(i) {
+    if (! web_of_life[[i]]$id %in% 
+        c(tb_sub$id,
+          paste(strsplit(web_of_life[[i]]$id, NULL)[[1]][c(1:2,4:3, 5:length(strsplit(web_of_life[[i]]$id, NULL)[[1]]))], collapse=''))) return(NULL)
+    res <- pbmcapply::pbmclapply(
+      X = seq(30),
+      FUN = function(iter) {
+        A_tmp <- web_of_life[[i]]$net
+        trans1 <- sample(seq(3), nrow(A_tmp), replace = TRUE, 
+                         prob = c(.50, .25, .25))
+        trans2 <- sample(seq(3), ncol(A_tmp), replace = TRUE, 
+                         prob = c(.50, .25, .25))
+        A_tmp[trans1 == 2, trans2 == 3] <- NA
+        A_tmp[trans1 == 3, trans2 == 2] <- NA
+        par <- get_lbm_param(A_tmp)    
+        return( 
+          list(bm_unif = do.call(robustness_lbm, c(par, ext_seq = "uniform"))$auc,
+               bm_dec = do.call(robustness_lbm, c(par, ext_seq = "decreasing"))$auc,
+               bm_inc = do.call(robustness_lbm, c(par, ext_seq = "increasing"))$auc,
+               mc_unif = robustness_emp(A_tmp, ext_seq = "uniform")$auc,
+               mc_dec = robustness_emp(A_tmp, ext_seq = "decreasing")$auc,
+               mc_inc = robustness_emp(A_tmp, ext_seq = "increasing")$auc))      
+      })
+    rob <- tb_sub %>% dplyr::filter(id == tb_sub[[i]])
+    return(
+      tibble::tibble(
+        id = rob$id,
+        rmse_bm_unif = mean((purrr::map_dbl(res, "bm_unif") - rob$Empirical)**2),
+        rmse_bm_dec = mean((purrr::map_dbl(res, "bm_dec") - rob$BM_dec)**2),
+        rmse_bm_inc = mean((purrr::map_dbl(res, "bm_inc") - rob$BM_inc)**2),           
+        rmse_mc_unif = mean((purrr::map_dbl(res, "mc_unif")- rob$Empirical)**2),
+        rmse_mc_dec = mean((purrr::map_dbl(res, "mc_dec") - rob$emp_dec)**2),
+        rmse_mc_inc = mean((purrr::map_dbl(res, "mc_inc") - rob$emp_inc)**2),
+        mean_bm_unif = mean(purrr::map_dbl(res, "bm_unif")),
+        sd_bm_unif = sd(purrr::map_dbl(res, "bm_unif")),
+        mean_bm_dec = mean(purrr::map_dbl(res, "bm_dec")),
+        sd_bm_dec = sd(purrr::map_dbl(res, "bm_dec")),
+        mean_bm_inc = mean(purrr::map_dbl(res, "bm_inc")),
+        sd_bm_inc = sd(purrr::map_dbl(res, "bm_inc")),
+        mean_mc_unif = mean(purrr::map_dbl(res, "mc_unif")),
+        sd_mc_unif = sd(purrr::map_dbl(res, "mc_unif")),
+        mean_mc_dec = mean(purrr::map_dbl(res, "mc_dec")),
+        sd_mc_dec = sd(purrr::map_dbl(res, "mc_dec")),
+        mean_mc_inc = mean(purrr::map_dbl(res, "mc_inc")),
+        sd_mc_inc = sd(purrr::map_dbl(res, "mc_inc"))
+      )
+    )
+  }, mc.cores = nb_cores)
+tb_na_pred <- dplyr::bind_rows(tb_na_pred)
+```
+
+```{r}
+tb_na_pred %>% purrr::set_names(nm = purrr::flatten_chr(purrr::transpose(web_of_life)$id)) %>% 
+  tibble::enframe() %>%
+  dplyr::filter(! is.null(value))
+  tidyr::unnest(cols = c(value)) %>% 
+  dplyr::mutate(lbm = purrr::flatten_dbl(purrr::map(value, "bm_unif")),
+         mc = purrr::flatten_dbl(purrr::map(value, "mc_unif"))) %>%
+  pivot_longer(cols = c("lbm", "mc"), names_to = "method", values_to = "rob") %>% 
+  ggplot(aes(x = name, y = rob, fill = method)) +
+  geom_boxplot() +
+  annotate(geom = "segment", y = c(rob_fruit_lbm, rob_pol_lbm),
+           yend = c(rob_fruit_lbm, rob_pol_lbm),
+           x = seq(0, 1)+.5, xend = seq(2)+.5, col = "blue") +
+  annotate(geom = "segment", y = c(rob_fruit_mc, rob_pol_mc), 
+           yend = c(rob_fruit_mc, rob_pol_mc), 
+           x = seq(0, 1)+.5, xend = seq(2)+.5, col = "red")  
+```
+
+
+## Applications on networks with missing species
+
+In the next applications, we use the same set of networks and assume that only a
+fraction of the species were observed (75% on average). 
+We also assume that there exists some expert knowledge that brings us 
+information about the size of each network and its density (connectance).
+
+```{r}
+tb_missing_species_pred <- pbmcapply::pbmclapply(
+  X = seq_along(web_of_life),
+  FUN = function(i) {
+    if (! web_of_life[[i]]$id %in% tb_sub$id) return(NULL)
+    res <- pbmcapply::pbmclapply(
+      X = seq(30),
+      FUN = function(iter) {
+        A_tmp <- web_of_life[[i]]$net
+        A_tmp <- A_tmp[sample(seq.int(nrow(A_tmp)), round(nrow(A_tmp)*.75)),
+                       sample(seq.int(ncol(A_tmp)), round(ncol(A_tmp)*.75))]
+        # while(sum(A_tmp) < max(nrow(A_tmp), ncol(A_tmp))) {
+        #   A_tmp <- web_of_life[[i]]$net
+        #   A_tmp <- A_tmp[sample(seq.int(nrow(A_tmp)), round(nrow(A_tmp)*.75)),
+        #                  sample(seq.int(ncol(A_tmp)), round(ncol(A_tmp)*.75))]          
+        # }
+        par <- get_lbm_param(A_tmp)    
+        return( 
+          list(
+            bm_unif_nonorm = do.call(auc_robustness_lbm, par),
+            bm_dec_nonorm = do.call(robustness_lbm, c(par, ext_seq = "decreasing"))$auc,
+            bm_inc_nonorm = do.call(robustness_lbm, c(par, ext_seq = "increasing"))$auc,
+            bm_unif_size = unlist(compare_robustness(list(par), 
+                                                new_nr = web_of_life[[i]]$nr,
+                                                new_nc = web_of_life[[i]]$nc,
+                                                dens = mean(A_tmp),
+                                                ext_seq = "uniform")),
+            bm_dec_size = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = mean(A_tmp),
+                                               ext_seq = "decreasing")),
+            bm_inc_size = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = mean(A_tmp),
+                                               ext_seq = "increasing")),
+            bm_unif = unlist(compare_robustness(list(par), 
+                                                new_nr = web_of_life[[i]]$nr,
+                                                new_nc = web_of_life[[i]]$nc,
+                                                dens = web_of_life[[i]]$dens,
+                                                ext_seq = "uniform")),
+            bm_dec = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = web_of_life[[i]]$dens,
+                                               ext_seq = "decreasing")),
+            bm_inc = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = web_of_life[[i]]$dens,
+                                               ext_seq = "increasing")),
+            mc_unif = robustness_emp(A_tmp, ext_seq = "uniform")$auc,
+            mc_dec = robustness_emp(A_tmp, ext_seq = "decreasing")$auc,
+            mc_inc = robustness_emp(A_tmp, ext_seq = "increasing")$auc))      
+      }, mc.cores = nb_cores)
+    rob <- tb_sub %>% dplyr::filter(id == web_of_life[[i]]$id)
+    return(
+      tibble::tibble(
+        id = rob$id,
+        rmse_bm_unif = mean((purrr::map_dbl(res, "bm_unif") - rob$Empirical)**2),
+        rmse_bm_dec = mean((purrr::map_dbl(res, "bm_dec") - rob$BM_dec)**2),
+        rmse_bm_inc = mean((purrr::map_dbl(res, "bm_inc") - rob$BM_inc)**2),           
+        rmse_mc_unif = mean((purrr::map_dbl(res, "mc_unif")- rob$Empirical)**2),
+        rmse_mc_dec = mean((purrr::map_dbl(res, "mc_dec") - rob$emp_dec)**2),
+        rmse_mc_inc = mean((purrr::map_dbl(res, "mc_inc") - rob$emp_inc)**2),
+        mean_bm_unif = mean(purrr::map_dbl(res, "bm_unif")),
+        sd_bm_unif = sd(purrr::map_dbl(res, "bm_unif")),
+        mean_bm_dec = mean(purrr::map_dbl(res, "bm_dec")),
+        sd_bm_dec = sd(purrr::map_dbl(res, "bm_dec")),
+        mean_bm_inc = mean(purrr::map_dbl(res, "bm_inc")),
+        sd_bm_inc = sd(purrr::map_dbl(res, "bm_inc")),
+        mean_mc_unif = mean(purrr::map_dbl(res, "mc_unif")),
+        sd_mc_unif = sd(purrr::map_dbl(res, "mc_unif")),
+        mean_mc_dec = mean(purrr::map_dbl(res, "mc_dec")),
+        sd_mc_dec = sd(purrr::map_dbl(res, "mc_dec")),
+        mean_mc_inc = mean(purrr::map_dbl(res, "mc_inc")),
+        sd_mc_inc = sd(purrr::map_dbl(res, "mc_inc")),
+        rmse_bm_unif_nonorm = mean((purrr::map_dbl(res, "bm_unif_nonorm") - rob$Empirical)**2),
+        rmse_bm_dec_nonorm = mean((purrr::map_dbl(res, "bm_dec_nonorm") - rob$BM_dec)**2),
+        rmse_bm_inc_nonorm = mean((purrr::map_dbl(res, "bm_inc_nonorm") - rob$BM_inc)**2),  
+        rmse_bm_unif_size = mean((purrr::map_dbl(res, "bm_unif_size") - rob$Empirical)**2),
+        rmse_bm_dec_size = mean((purrr::map_dbl(res, "bm_dec_size") - rob$BM_dec)**2),
+        rmse_bm_inc_size = mean((purrr::map_dbl(res, "bm_inc_size") - rob$BM_inc)**2)
+      )
+    )
+  }, mc.cores = nb_cores)
+tb_missing_species_pred <- dplyr::bind_rows(tb_missing_species_pred)
+```
+
+```{r}
+tb_missing_species_pred %>% 
+  mutate(Experiment = "Missing Species") %>% 
+#  bind_rows(tb_na_pred %>% mutate(Experiment = "NA Interactions")) %>%
+  select(starts_with("rmse"), starts_with("Experiment")) %>% 
+  pivot_longer(cols = starts_with("rmse"),
+               names_to = c("Method", "Extinction"),
+               names_sep = 8,
+               values_to = "RMSE") %>% 
+  mutate(Method = case_when(
+    str_sub(Method, 6, 7) == "bm" ~ "Block Model",
+    str_sub(Method, 6, 7) == "mc" ~ "Monte Carlo")) %>%
+  # mutate(`Extinctions Sequences` = case_when(
+  #   Extinction == "inc" ~ "Increasing",
+  #   Extinction == "dec" ~ "Decreasing",
+  #   Extinction == "unif" ~ "Uniform")) %>%
+  mutate(RMSE = sqrt(RMSE)) %>% 
+  ggplot(aes(x = Extinction, y = RMSE, fill = Method)) +
+  facet_wrap(~ Experiment) +
+  geom_boxplot() +
+  theme_classic(base_size = 15)
+```
+
+```{r}
+tb_missing_species_pred %>% 
+  mutate(Experiment = "Missing Species") %>% 
+  bind_rows(tb_na_pred %>% mutate(Experiment = "NA Interactions")) %>%
+  select(starts_with("rmse"), starts_with("Experiment")) %>% 
+  pivot_longer(cols = starts_with("rmse"),
+               names_to = c("Method", "Extinction"),
+               names_sep = 8,
+               values_to = "RMSE") %>% 
+  mutate(Method = case_when(
+    str_sub(Method, 6, 7) == "bm" ~ "Block Model",
+    str_sub(Method, 6, 7) == "mc" ~ "Monte Carlo")) %>%
+  mutate(`Extinctions Sequences` = case_when(
+    Extinction == "inc" ~ "Increasing",
+    Extinction == "dec" ~ "Decreasing",
+    Extinction == "unif" ~ "Uniform")) %>%
+  mutate(RMSE = sqrt(RMSE)) %>% 
+  ggplot(aes(x = `Extinctions Sequences`, y = RMSE, fill = Method)) +
+  facet_wrap(~ Experiment) +
+  geom_boxplot() +
+  theme_classic(base_size = 15)
+ggsave(filename = "prediction.png", path = "~/Documents/robustness/robustness/image/",
+       width = 9, height = 6)
+```
+
+
+## Comparing network of different size
+
+
+```{r}
+nodf <- map(.x = seq_along(web_of_life),
+            .f = function(i) {
+              if (! web_of_life[[i]]$id %in% tb_sub$id) return(NULL)
+              bipartite::nested(web_of_life[[i]]$net, method = "NODF2")})
+tb_sub %>% 
+  mutate(`Interaction type` = str_sub(id, 1, 4)) %>% 
+  mutate(NODF = unlist(nodf)) %>% 
+  bind_cols(is_cp) %>% 
+  # bind_cols(is_cp = is_cp) %>% 
+  mutate(`Interaction type` = case_when(
+    `Interaction type` == "A_HP" ~ "Host-Parasite",
+    `Interaction type` == "M_PL" ~ "Pollination",
+    `Interaction type` == "M_SD" ~ "Seed Dispersal")) %>% 
+  filter(Q > 1 & K > 1) %>% 
+  ggplot(aes(x = bm_norm_unif, y = bm_norm_dec, shape = `Interaction type`, 
+             col =  `Interaction type`)) +
+  geom_point(data = tb_sub %>% filter(Q > 1 & K > 1), inherit.aes = FALSE,
+             aes(x = bm_norm_unif, y = bm_norm_dec),
+             col = "grey80", size = 3, alpha = .5) +
+  geom_point(aes(size = bm_norm_inc, alpha = NODF), show.legend = FALSE) +
+  # geom_text(aes(label = str_sub(id, 5, -1)), col = "black") +
+  coord_fixed() +
+  facet_wrap(~ `Interaction type`) +
+  xlab("AUC(R), Uniform") + 
+  ylab("AUC(R), Decreasing") +
+  theme_minimal(base_size = 15, base_rect_size = .25)
+#ggsave("wol_robustness_by_type.png", path = "~/Documents/robustness/robustness/image/",
+       width = 8, height = 4.5)
+```
+```{r}
+tb_sub %>% 
+  mutate(`Interaction type` = str_sub(id, 1, 4)) %>% 
+  mutate(NODF = unlist(nodf)) %>%
+  bind_cols(is_cp) %>% 
+  select(bm_norm_unif, bm_norm_dec, bm_norm_inc, NODF, cp) %>% 
+  cor(method = "pearson")
+```
+
+
+Using the same collection of networks, we will compute the robustness for
+different model size of LBM:
+
+```{r}
+tb_size <- pbmcapply::pbmclapply(
+  X = seq_along(web_of_life),
+  FUN = function(i) {
+    if (! web_of_life[[i]]$id %in% tb_sub$id) return(NULL)
+    tb_res <- tibble::tibble()
+    for(k in seq(2, 4)) {
+      for(q in seq(2, 4)) {
+        par <- get_lbm_param(web_of_life[[i]]$net, model_size = c(k, q))
+        if(! is.null(par)) {
+          tb_res <- dplyr::bind_rows(
+            tb_res,
+            tibble(tibble(
+              id = web_of_life[[i]]$id,
+              K = k,
+              Q = q,
+              bm_norm_unif = unlist(compare_robustness(list(par),ext_seq = "uniform")),
+              bm_norm_dec = unlist(compare_robustness(list(par),ext_seq = "decreasing")),
+              bm_norm_inc = unlist(compare_robustness(list(par),ext_seq = "increasing"))))
+          )
+        }
+      }
+    }
+    return(tb_res)
+  }, mc.cores = nb_cores)
+deg_seq <- map_dbl(.x = web_of_life,
+                   .f = function(wol) {
+                     if (! wol$id %in% tb_sub$id) return(NULL)
+                     (1-colMeans(wol$net)) - (1-colMeans(wol$net))^(wol$nc+1) /
+                colMeans(wol$net)
+                   })
+```
+
+```{r}
+tb_size %>% 
+  mutate(size = K**2+Q) %>% 
+  select(size, bm_norm_unif, id) %>% 
+  pivot_wider(names_from = size, values_from = bm_norm_unif) %>%
+  select(-id) %>% 
+  cor( method = "spearman", use = "pairwise.complete.obs") %>% 
+  min()
+tb_size %>% 
+  mutate(size = K**2+Q) %>% 
+  select(size, bm_norm_inc, id) %>% 
+  pivot_wider(names_from = size, values_from = bm_norm_inc) %>%
+  select(-id) %>% 
+  cor( method = "spearman", use = "pairwise.complete.obs") %>% 
+  ggcorrplot::ggcorrplot()
+tb_size %>% 
+  mutate(size = K**2+Q) %>% 
+  select(size, bm_norm_dec, id) %>% 
+  pivot_wider(names_from = size, values_from = bm_norm_dec) %>%
+  select(-id) %>% 
+  cor( method = "spearman", use = "pairwise.complete.obs") %>% 
+  ggcorrplot::ggcorrplot()
+
+tb_size %>% 
+  mutate(size = K**2+Q) %>% 
+  select(size, bm_norm_unif, id) %>% 
+  pivot_wider(names_from = size, values_from = bm_norm_unif) %>%
+  select(-id) %>% 
+  cor( method = "pearson", use = "pairwise.complete.obs") %>% 
+  ggcorrplot::ggcorrplot()
+tb_size %>% 
+  mutate(size = K**2+Q) %>% 
+  select(size, bm_norm_inc, id) %>% 
+  pivot_wider(names_from = size, values_from = bm_norm_inc) %>%
+  select(-id) %>% 
+  cor( method = "pearson", use = "pairwise.complete.obs") %>% 
+  ggcorrplot::ggcorrplot()
+tb_size %>% 
+  mutate(size = K**2+Q) %>% 
+  select(size, bm_norm_dec, id) %>% 
+  pivot_wider(names_from = size, values_from = bm_norm_dec) %>%
+  select(-id) %>% 
+  cor( method = "pearson", use = "pairwise.complete.obs") %>% 
+  ggcorrplot::ggcorrplot()  
+```
+
+
+```{r}
+tb_size %>% 
+  mutate(`Interaction type` = str_sub(id, 1, 4)) %>% 
+  mutate(`Interaction type` = case_when(
+    `Interaction type` == "A_HP" ~ "Host-Parasite",
+    `Interaction type` == "M_PL" ~ "Pollination",
+    `Interaction type` == "M_SD" ~ "Seed Dispersal")) %>% 
+  filter(K == 3, Q == 3) %>% 
+  ggplot(aes(x = bm_norm_unif, y = bm_norm_dec, shape = `Interaction type`, 
+             col = `Interaction type`)) +
+  geom_point(data = tb_size %>% filter(K == 3, Q == 3), inherit.aes = FALSE,
+             aes(x = bm_norm_unif, y = bm_norm_dec),
+             col = "grey80", size = 3, alpha = .5) +
+  geom_point(aes(size = bm_norm_inc), show.legend = "none") +
+  coord_fixed() +
+  facet_wrap(~ `Interaction type`) +
+  xlab("AUC(R), Uniform") + 
+  ylab("AUC(R), Decreasing") +
+  theme_minimal(base_size = 15)
+#ggsave("wol_robustness_by_type.png", path = "~/Documents/robustness/robustness/image/",
+       width = 8, height = 4.5)
+```
+
+```{r}
+is_cp <- pbmcapply::pbmclapply(
+  X = seq_along(web_of_life),
+  FUN = function(i) {
+    if (! web_of_life[[i]]$id %in% tb_sub$id) return(NULL)
+    param <- get_lbm_param(web_of_life[[i]]$net, model_size = c(2, 2))
+    if(sum(dim(param$con)) != 4) return(FALSE) 
+    max.cord <-  arrayInd(which.max(param$con), .dim = c(2, 2))
+    min.cord <-  arrayInd(which.min(param$con), .dim = c(2, 2))
+    delta <- param$con[c(max.cord[,1], setdiff(c(1,2), max.cord[,1])), 
+                 c(max.cord[,2], setdiff(c(1,2), max.cord[,2]))]
+    return(tibble(is_cp = (sum(min.cord == max.cord) == 0),
+                  cp = 1 - .5*(max(delta[1,2], delta[2,1])/delta[1,1] +
+                                delta[2,2]/min(delta[1,2], delta[2,1]) )) 
+    )
+  }, mc.cores = nb_cores)
+is_cp <- bind_rows(is_cp)
+```
+
+
+
+## Different sampling effort
+
+```{r}
+tb_missing_realistic <- pbmcapply::pbmclapply(
+  X = seq_along(web_of_life),
+  FUN = function(i) {
+    if (! web_of_life[[i]]$id %in% tb_sub$id) return(NULL)
+    res <- pbmcapply::pbmclapply(
+      X = seq(30),
+      FUN = function(iter) {
+        A_tmp <- web_of_life[[i]]$net
+        A_tmp <- A_tmp[sample(seq.int(nrow(A_tmp)), round(nrow(A_tmp)*.75),
+                              prob = rowSums(A_tmp)),]
+        A_sub <- A_tmp[rowSums(A_tmp) > 1, ]
+        while(any(rowSums(A_tmp) != 0)) {
+          for (i in seq(nrow(A_tmp))) {
+            if(A_tmp[i,] >1) {
+              A_tmp[i,] <- 1*(A_tmp[i,] == 1 & )
+            }
+          }
+          A_tmp[rowSums(A_tmp) > 1, ] <-  1*A_tmp[rowSums(A_tmp) > 1, ] 
+        }
+        # while(sum(A_tmp) < max(nrow(A_tmp), ncol(A_tmp))) {
+        #   A_tmp <- web_of_life[[i]]$net
+        #   A_tmp <- A_tmp[sample(seq.int(nrow(A_tmp)), round(nrow(A_tmp)*.75)),
+        #                  sample(seq.int(ncol(A_tmp)), round(ncol(A_tmp)*.75))]          
+        # }
+        par <- get_lbm_param(A_tmp)    
+        return( 
+          list(
+            bm_unif_nonorm = do.call(auc_robustness_lbm, par),
+            bm_dec_nonorm = do.call(robustness_lbm, c(par, ext_seq = "decreasing"))$auc,
+            bm_inc_nonorm = do.call(robustness_lbm, c(par, ext_seq = "increasing"))$auc,
+            bm_unif_size = unlist(compare_robustness(list(par), 
+                                                new_nr = web_of_life[[i]]$nr,
+                                                new_nc = web_of_life[[i]]$nc,
+                                                dens = mean(A_tmp),
+                                                ext_seq = "uniform")),
+            bm_dec_size = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = mean(A_tmp),
+                                               ext_seq = "decreasing")),
+            bm_inc_size = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = mean(A_tmp),
+                                               ext_seq = "increasing")),
+            bm_unif = unlist(compare_robustness(list(par), 
+                                                new_nr = web_of_life[[i]]$nr,
+                                                new_nc = web_of_life[[i]]$nc,
+                                                dens = web_of_life[[i]]$dens,
+                                                ext_seq = "uniform")),
+            bm_dec = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = web_of_life[[i]]$dens,
+                                               ext_seq = "decreasing")),
+            bm_inc = unlist(compare_robustness(list(par), 
+                                               new_nr = web_of_life[[i]]$nr,
+                                               new_nc = web_of_life[[i]]$nc,
+                                               dens = web_of_life[[i]]$dens,
+                                               ext_seq = "increasing")),
+            mc_unif = robustness_emp(A_tmp, ext_seq = "uniform")$auc,
+            mc_dec = robustness_emp(A_tmp, ext_seq = "decreasing")$auc,
+            mc_inc = robustness_emp(A_tmp, ext_seq = "increasing")$auc))      
+      }, mc.cores = nb_cores)
+    rob <- tb_sub %>% dplyr::filter(id == web_of_life[[i]]$id)
+    return(
+      tibble::tibble(
+        id = rob$id,
+        rmse_bm_unif = mean((purrr::map_dbl(res, "bm_unif") - rob$Empirical)**2),
+        rmse_bm_dec = mean((purrr::map_dbl(res, "bm_dec") - rob$BM_dec)**2),
+        rmse_bm_inc = mean((purrr::map_dbl(res, "bm_inc") - rob$BM_inc)**2),           
+        rmse_mc_unif = mean((purrr::map_dbl(res, "mc_unif")- rob$Empirical)**2),
+        rmse_mc_dec = mean((purrr::map_dbl(res, "mc_dec") - rob$emp_dec)**2),
+        rmse_mc_inc = mean((purrr::map_dbl(res, "mc_inc") - rob$emp_inc)**2),
+        mean_bm_unif = mean(purrr::map_dbl(res, "bm_unif")),
+        sd_bm_unif = sd(purrr::map_dbl(res, "bm_unif")),
+        mean_bm_dec = mean(purrr::map_dbl(res, "bm_dec")),
+        sd_bm_dec = sd(purrr::map_dbl(res, "bm_dec")),
+        mean_bm_inc = mean(purrr::map_dbl(res, "bm_inc")),
+        sd_bm_inc = sd(purrr::map_dbl(res, "bm_inc")),
+        mean_mc_unif = mean(purrr::map_dbl(res, "mc_unif")),
+        sd_mc_unif = sd(purrr::map_dbl(res, "mc_unif")),
+        mean_mc_dec = mean(purrr::map_dbl(res, "mc_dec")),
+        sd_mc_dec = sd(purrr::map_dbl(res, "mc_dec")),
+        mean_mc_inc = mean(purrr::map_dbl(res, "mc_inc")),
+        sd_mc_inc = sd(purrr::map_dbl(res, "mc_inc")),
+        rmse_bm_unif_nonorm = mean((purrr::map_dbl(res, "bm_unif_nonorm") - rob$Empirical)**2),
+        rmse_bm_dec_nonorm = mean((purrr::map_dbl(res, "bm_dec_nonorm") - rob$BM_dec)**2),
+        rmse_bm_inc_nonorm = mean((purrr::map_dbl(res, "bm_inc_nonorm") - rob$BM_inc)**2),  
+        rmse_bm_unif_size = mean((purrr::map_dbl(res, "bm_unif_size") - rob$Empirical)**2),
+        rmse_bm_dec_size = mean((purrr::map_dbl(res, "bm_dec_size") - rob$BM_dec)**2),
+        rmse_bm_inc_size = mean((purrr::map_dbl(res, "bm_inc_size") - rob$BM_inc)**2)
+      )
+    )
+  }, mc.cores = nb_cores)
+tb_missing_realistic <- dplyr::bind_rows(tb_missing_realistic)
+```
+
+```{r}
+tb_missing_species_pred %>% 
+  mutate(Experiment = "Missing Species") %>% 
+#  bind_rows(tb_na_pred %>% mutate(Experiment = "NA Interactions")) %>%
+  select(starts_with("rmse"), starts_with("Experiment")) %>% 
+  pivot_longer(cols = starts_with("rmse"),
+               names_to = c("Method", "Extinction"),
+               names_sep = 8,
+               values_to = "RMSE") %>% 
+  mutate(Method = case_when(
+    str_sub(Method, 6, 7) == "bm" ~ "Block Model",
+    str_sub(Method, 6, 7) == "mc" ~ "Monte Carlo")) %>%
+  # mutate(`Extinctions Sequences` = case_when(
+  #   Extinction == "inc" ~ "Increasing",
+  #   Extinction == "dec" ~ "Decreasing",
+  #   Extinction == "unif" ~ "Uniform")) %>%
+  mutate(RMSE = sqrt(RMSE)) %>% 
+  ggplot(aes(x = Extinction, y = RMSE, fill = Method)) +
+  facet_wrap(~ Experiment) +
+  geom_boxplot() +
+  theme_classic(base_size = 15)
+```

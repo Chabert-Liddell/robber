@@ -35,6 +35,7 @@ robustness_emp <- function(A, ext_seq = "uniform",
   if (! ext_seq %in% c("uniform", "increasing", "decreasing")) {
     stop(paste0("Unknown extinction sequence: ", ext_seq, "."))
   }
+  if (any(is.na(A))) warning("NA will be considered as 0.")
   nr <- nrow(A)
   nc <- ncol(A)
   if (ext_seq == "uniform") {
@@ -42,10 +43,11 @@ robustness_emp <- function(A, ext_seq = "uniform",
       vapply(X = seq_len(nb_iter),
              FUN = function(i) {
                prim_ext <- sample(x = seq_len(nr), size = nr, replace = FALSE)
-               c(sum(colSums(A) != 0),
+               c(sum(colSums(A, na.rm = TRUE) != 0),
                  vapply(X = seq.int(nrow(A)),
                         FUN = function(m) {
-                          sum(colSums(A[prim_ext[-seq_len(m)], ,drop = FALSE]) != 0)
+                          sum(colSums(A[prim_ext[-seq_len(m)], ,drop = FALSE],
+                                      na.rm = TRUE) != 0)
                         },
                         FUN.VALUE = integer(length = 1)))
              },
@@ -61,10 +63,11 @@ robustness_emp <- function(A, ext_seq = "uniform",
       vapply(X = seq_len(nb_iter),
              FUN = function(i) {
                prim_ext <- names(sort(ord[sample(x = seq(nr))]))
-               c(sum(colSums(A) != 0),
+               c(sum(colSums(A, na.rm = TRUE) != 0),
                  vapply(X = seq.int(nrow(A)),
                         FUN = function(m) {
-                          sum(colSums(A[prim_ext[-seq_len(m)], ,drop = FALSE]) != 0)
+                          sum(colSums(A[prim_ext[-seq_len(m)], ,drop = FALSE],
+                                      na.rm = TRUE) != 0)
                         },
                         FUN.VALUE = integer(length = 1)))
              },
@@ -80,10 +83,11 @@ robustness_emp <- function(A, ext_seq = "uniform",
       vapply(X = seq_len(nb_iter),
              FUN = function(i) {
                prim_ext <- names(sort(ord[sample(x = seq(nr))], decreasing = TRUE))
-               c(sum(colSums(A) != 0),
+               c(sum(colSums(A, na.rm = TRUE) != 0),
                  vapply(X = seq.int(nrow(A)),
                         FUN = function(m) {
-                          sum(colSums(A[prim_ext[-seq_len(m)], ,drop = FALSE]) != 0)
+                          sum(colSums(A[prim_ext[-seq_len(m)], ,drop = FALSE],
+                                      na.rm = TRUE) != 0)
                         },
                         FUN.VALUE = integer(length = 1)))
              },
