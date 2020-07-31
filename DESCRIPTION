@@ -44,3 +44,5 @@ Remotes:
     jb-leger/blockmodels,
     Demiperimetre/GREMLIN@missingData
 VignetteBuilder: knitr
+Depends: 
+    R (>= 2.10)

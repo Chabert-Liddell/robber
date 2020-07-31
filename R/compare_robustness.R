@@ -1,5 +1,7 @@
 normalize_lbm_con <- function(dens, con, pi, rho, nr = NULL, nc = NULL) {
   con <- dens * con / as.vector(pi %*% con %*% rho)
+  if(any(con>=1)) warning("Connectivity > 1 set to 1.")
+  pmin(con, 1-1e-6)
 }
 
 
