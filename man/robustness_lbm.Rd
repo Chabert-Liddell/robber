@@ -19,15 +19,27 @@ column blocks}
 \item{nc}{An integer, the number of column (secondary) species}
 
 \item{ext_seq}{A string, the rule for the primary extinctions sequences,
-one of \code{"uniform"}, the default for uniform extinctions sequences,
-\code{"decreasing"} and \code{"increasing"} for primary extinctions sequences
-by increasing and decreasing row blocks connection probability}
+one of:
+\itemize{
+\item \code{"uniform"}, the default for uniform extinctions sequences,
+\item \code{"decreasing"} and \code{"increasing"} for primary extinctions sequences
+by increasing and decreasing row blocks connection probability,
+\item \code{"natural"} primary extinctions sequences with the block ordering given
+in the function parameter.
+\item \code{"blocks"} primary extinctions sequences for all blocks permutation.
+}}
 }
 \value{
-A list of size 2:
+A list of size 3 except for \code{ext_seq = "blocks"}:
 \itemize{
-\item \code{$fun} is the robustness function, a vector of size \code{nr +1}
+\item \code{$fun} the robustness function, a vector of size \code{nr +1}
 \item \code{$auc} the area under the curve of the robustness function
+\item \code{$block} a vector of size \code{length(pi)}, the block ordering for
+primary extinctions sequence by blocks. \code{NULL} if \code{ext_seq = "uniform"}.
+
+If \code{ext_seq = "blocks"}, then a list of length QR!,
+where QR is the length of the parameter pi. Each element of the list is a
+list of size 3 as above.
 }
 }
 \description{
@@ -43,4 +55,16 @@ nc <- 30
 my_rob <- robustness_lbm(con, pi, rho, nr, nc)
 my_rob$fun
 my_rob$auc
+
+#' con <- matrix(c(.5,.3,.3,.1), 2, 2)
+pi  <- c(.25,.75)
+rho <- c(1/3, 2/3)
+nr <- 50
+nc <- 30
+my_rob <- robustness_lbm(con, pi, rho, nr, nc, ext_seq = "blocks")
+length(my_rob)
+my_rob[[1]]$fun
+my_rob[[1]]$auc
+my_rob[[2]]$fun
+my_rob[[2]]$auc
 }
