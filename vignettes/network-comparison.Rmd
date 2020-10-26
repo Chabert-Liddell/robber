@@ -157,7 +157,7 @@ tb_robustness_wol %>%
   ggplot2::coord_fixed() +
   ggplot2::theme_minimal(base_size = 15, base_rect_size = .25)
 #ggsave("wol_goodness_of_fit.png", path = "~/Documents/robustness/robustness/image/",
-       width = 8, height = 6)
+#       width = 8, height = 6)
 ```
 
 
@@ -176,9 +176,10 @@ tb_sub <- tb_robustness_wol %>%
 tb_na_pred <- pbmcapply::pbmclapply(
   X = seq_along(web_of_life),
   FUN = function(i) {
-    if (! web_of_life[[i]]$id %in% 
-        c(tb_sub$id,
-          paste(strsplit(web_of_life[[i]]$id, NULL)[[1]][c(1:2,4:3, 5:length(strsplit(web_of_life[[i]]$id, NULL)[[1]]))], collapse=''))) return(NULL)
+    # if (! web_of_life[[i]]$id %in% 
+    #     c(tb_sub$id,
+    #       paste(strsplit(web_of_life[[i]]$id, NULL)[[1]][c(1:2,4:3, 5:length(strsplit(web_of_life[[i]]$id, NULL)[[1]]))], collapse=''))) return(NULL)
+    if (! web_of_life[[i]]$id %in% tb_sub$id) return(NULL)
     res <- pbmcapply::pbmclapply(
       X = seq(30),
       FUN = function(iter) {
@@ -198,7 +199,7 @@ tb_na_pred <- pbmcapply::pbmclapply(
                mc_dec = robustness_emp(A_tmp, ext_seq = "decreasing")$auc,
                mc_inc = robustness_emp(A_tmp, ext_seq = "increasing")$auc))      
       })
-    rob <- tb_sub %>% dplyr::filter(id == tb_sub[[i]])
+    rob <-  tb_sub %>% dplyr::filter(id == web_of_life[[i]]$id)
     return(
       tibble::tibble(
         id = rob$id,
