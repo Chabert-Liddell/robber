@@ -85,6 +85,9 @@ if (! file.exists("./tb_robustness_wol.rds"))
       rob_bm <- do.call(robustness_lbm, param)$auc
       rob_bm_inc <- do.call(robustness_lbm, c(param, ext_seq = "increasing"))$auc
       rob_bm_dec <- do.call(robustness_lbm, c(param, ext_seq = "decreasing"))$auc
+      bm_blocks <- do.call(robustness_lbm, c(param, ext_seq = "blocks"))
+      rob_bm_min <- min(map_dbl(bm_blocks, "auc"))
+      rob_bm_max <- max(map_dbl(bm_blocks, "auc"))
       var_rob <- do.call(var_auc_unif_lbm, param)
       tb_tmp <- tibble::tibble(
         id = web_of_life[[i]]$id, 
@@ -96,6 +99,8 @@ if (! file.exists("./tb_robustness_wol.rds"))
         dens = web_of_life[[i]]$dens,
         BM_inc = rob_bm_inc,
         BM_dec = rob_bm_dec,
+        BM_min = rob_bm_min,
+        BM_max = rob_bm_max,
         emp_inc = robustness_emp(web_of_life[[i]]$net, ext_seq = "increasing")$auc,
         emp_dec = robustness_emp(web_of_life[[i]]$net, ext_seq = "decreasing")$auc,
         bm_norm_unif = unlist(compare_robustness(list(param),ext_seq = "uniform")),
@@ -346,6 +351,28 @@ tb_rob_order %>% filter(dec_is_min == FALSE | inc_is_max == FALSE | invmin_is_ma
 
 
 ```{r}
+indexunif <- with(tb_rob_order, which(( dec> unif | inc < unif | dec > inc)))
+
+map(indexunif, function(i) lbm_par_fixed[[i]])
+# Tous ces réseaux ont une structure assortative, très inhabituel. Mais non détecté par l'ICL
+tb_robustness_wol[indexunif,] %>% select(id, nr, nc, dens, K, Q,  emp_dec, Empirical, emp_inc)
+# 
+indexdecmin <- with(tb_rob_order, which(dec_is_min == FALSE ))
+indexincmax <- with(tb_rob_order, which((inc_is_max == FALSE )))
+indexinv <- with(tb_rob_order, which((invmin_is_max == FALSE )))
+
+map(indexdecmin, function(i) lbm_par_fixed[[i]])
+map(indexincmax, function(i) lbm_par_fixed[[i]])
+
+tb_rob_order[indexdecmin,] %>% select(id, rob_min, dec, unif, inc, rob_max)
+tb_rob_order[indexincmax,] %>% select(id, rob_min, dec, unif, inc, rob_max)
+tb_robustness_wol[indexincmax,] %>% select(id, nr, nc, dens, K, Q,  emp_dec, Empirical, emp_inc)
+tb_robustness_wol[indexinv,] %>% select(id, nr, nc, dens, K, Q,  emp_dec, Empirical, emp_inc)
+
+tb_robustness_wol[] %>% 
+  filter(id %in% c("M_PL_026", "M_PL_046", "M_PL_072_01", "M_SD_031", "A_HP_031", "A_HP_050", "M_PL_004")) %>% 
+  select(id, nr, nc, dens, K, Q,  emp_dec, Empirical, emp_inc)
+
 res <- robustness_lbm(con = do.call(robber:::normalize_lbm_con, c(dens = 0.0156, lbm_par_fixed[[6]][1:5])), 
                                 rho = lbm_par_fixed[[6]]$rho,
                                 pi = lbm_par_fixed[[6]]$pi, 
