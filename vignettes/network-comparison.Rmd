@@ -65,21 +65,42 @@ ggplot2::ggplot(data.frame(x = seq(0, tb_robustness$nr)/tb_robustness$nr,
 
 We can also compute the robustness by block model for other extinctions sequences:
 ```{r}
+rob_emp_inc <- robustness_emp(web_of_life[[100]]$net, 
+                              ext_seq = "increasing")
+rob_emp_dec <- robustness_emp(web_of_life[[100]]$net,
+                              ext_seq = "decreasing")
 rob_bm_inc <- do.call(robustness_lbm, c(param, ext_seq = "increasing"))
 rob_bm_dec <- do.call(robustness_lbm, c(param, ext_seq = "decreasing"))
 print(c(rob_bm_dec$auc, rob_bm$auc, rob_bm_inc$auc))
 ```
 
+```{r plot100}
+ggplot2::ggplot(data.frame(x = seq(0, tb_robustness$nr)/tb_robustness$nr,
+                           Empirical = rob_emp_inc$fun,
+                           BM = rob_bm_inc$fun),
+                ggplot2::aes(x = x, y = Empirical)) +
+  ggplot2::geom_step(col = "red") + 
+  ggplot2::geom_step(ggplot2::aes(y = BM), linetype = "dashed", col = "blue")
+```
+
+```{r plot100}
+ggplot2::ggplot(data.frame(x = seq(0, tb_robustness$nr)/tb_robustness$nr,
+                           Empirical = rob_emp_dec$fun,
+                           BM = rob_bm_dec$fun),
+                ggplot2::aes(x = x, y = Empirical)) +
+  ggplot2::geom_step(col = "red") + 
+  ggplot2::geom_step(ggplot2::aes(y = BM), linetype = "dashed", col = "blue")
+```
 
 ```{r comp_tb_rob_wol}
 if (! file.exists("./tb_robustness_wol.rds"))
 {
   nb_cores <- parallel::detectCores()/2
-  if( is.null(nb_cores)) nb_cores <- 1
+  if (is.null(nb_cores)) nb_cores <- 1
   tb_robustness_wol <- pbmcapply::pbmclapply(
     X = seq_along(web_of_life),
     FUN = function(i) {
-      #      if (web_of_life[[i]]$nr + web_of_life[[i]]$nc > 1000) return(NULL)
+      if (web_of_life[[i]]$nr > 200) return(NULL)
       rob_emp <- robustness_emp(web_of_life[[i]]$net)$auc
       param <- get_lbm_param(web_of_life[[i]]$net)
       rob_bm <- do.call(robustness_lbm, param)$auc
@@ -141,6 +162,7 @@ if (! file.exists("./tb_robustness_wol.rds"))
 
 ```
 ```{r}
+tb_robustness_wol <- bind_rows(map(seq_along(tb_robustness_wol), ~ if(is_tibble(tb_robustness_wol[[.x]])) tb_robustness_wol[[.x]]))
 tb_robustness_wol %>% 
   mutate("# Std Deviation" = abs(Empirical - BM)/sqrt(Variance),
          "Empty Column" = (1-dens)**nr) %>% 

@@ -145,29 +145,47 @@ auc_robustness_lbm <- function(con, pi, rho, nr, nc) {
 
 
 rob_block_lbm <- function( con, pi, rho, nr, nc) {
-  result <- rep(0,nr+1)
-  K <- length(pi)
-  order_prob <- matrix(0, nr+1, K)
-  order_prob[nr+1, K] <- 0
-  for (k in seq_len(K-1)) {
-    for (m in seq.int(0, nr-1)) {
-      order_prob[m+1, k] <-
-        sum(stats::dbinom(x = seq.int(0, nr-m-1), size = nr,
-                          prob = 1-sum(pi[1:k])) -
-              stats::dbinom(x = seq.int(0, nr-m-1), size = nr,
-                            prob = 1 - sum(pi[1:k]) + pi[k]))
+  if (length(pi) == 1) return(robustness_lbm(con, pi, rho, nr, nc, ext_seq = "uniform"))
+  X <- partitions::compositions(nr, length(pi))
+  pi <- rev(pi)
+  con <- con[rev(seq(nrow(con))),,drop = FALSE]
+  pmult <- apply(X, 2, function(x) dmultinom(x, prob = pi))
+  rob <- rep(1,nr+1)
+  storage.mode(X) <- "numeric"
+  cumX <- Rfast::colCumSums(X)
+  for (q in seq_along(rho)) {
+    for (m in seq(0, nr)) {
+      rob[m+1] <- rob[m+1] - rho[q] * sum(pmult *
+                                            Rfast::rowprods(
+                                              vapply(seq_along(pi),
+                                                     function(i) (1-con[i,q])**pmax(0,pmin(X[i,], cumX[i,] - m)),
+                                                     FUN.VALUE = rep(0, ncol(X)))))
     }
   }
-  order_prob[,K] <- 1 - rowSums(order_prob)
-  tmp_rob <- matrix(0, nr+1, length(rho))
-  for(m in seq.int(0, nr)) {
-    for(k in seq_len(K)) {
-      tmp_rob[m+1,] <- tmp_rob[m+1,] +
-        (( (pi[1:k]/sum(pi[1:k])) %*% (1-con[1:k, , drop=FALSE]))**(m) *
-           order_prob[m+1, k])
-    }
-  }
-  result[1:(nr+1)] <- as.vector(tmp_rob %*% rho)[(nr+1):1]
-  return(list(fun = 1 - result,
-              auc = sum(1 - result)/nr))
+  # rob
+  # result <- rep(0,nr+1)
+  # K <- length(pi)
+  # order_prob <- matrix(0, nr+1, K)
+  # order_prob[nr+1, K] <- 0
+  # for (k in seq_len(K-1)) {
+  #   for (m in seq.int(0, nr-1)) {
+  #     order_prob[m+1, k] <-
+  #       sum(stats::dbinom(x = seq.int(0, nr-m-1), size = nr,
+  #                         prob = 1-sum(pi[1:k])) -
+  #             stats::dbinom(x = seq.int(0, nr-m-1), size = nr,
+  #                           prob = 1 - sum(pi[1:k]) + pi[k]))
+  #   }
+  # }
+  # order_prob[,K] <- 1 - rowSums(order_prob)
+  # tmp_rob <- matrix(0, nr+1, length(rho))
+  # for(m in seq.int(0, nr)) {
+  #   for(k in seq_len(K)) {
+  #     tmp_rob[m+1,] <- tmp_rob[m+1,] +
+  #       (( (pi[1:k]/sum(pi[1:k])) %*% (1-con[1:k, , drop=FALSE]))**(m) *
+  #          order_prob[m+1, k])
+  #   }
+  # }
+  # result[1:(nr+1)] <- as.vector(tmp_rob %*% rho)[(nr+1):1]
+  return(list(fun = rob,
+              auc = sum(rob)/nr))
 }
