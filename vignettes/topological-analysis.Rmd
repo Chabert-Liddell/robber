@@ -401,13 +401,13 @@ robustness_lbm(con, pi, rho, nr, nc, ext_seq = "decreasing")$auc
 skimr::skim(res_strange)
 res_strange %>% 
   pivot_longer(cols = where(is.numeric), names_to = "Method", values_to = "Robustness") %>% 
-  mutate(
-    Extinction = case_when(
-      Method == "unif" ~ "Uniform",
-      Method == "inc" ~ "Increasing",
-      Method == "dec" ~ "Decreasing"
-    )) %>% 
-  ggplot(aes(x = Robustness, fill = Extinction, lty = Extinction)) +
+  # mutate(
+  #   Extinction = case_when(
+  #     Method == "unif" ~ "Uniform",
+  #     Method == "inc" ~ "Increasing",
+  #     Method == "dec" ~ "Decreasing"
+  #   )) %>% 
+  ggplot(aes(x = Robustness, fill = Method, linetype = Method)) +
   geom_density(alpha = .2) +
   ylab(label = "") +
 #  facet_wrap(~ Model) +
