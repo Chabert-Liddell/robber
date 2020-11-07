@@ -147,9 +147,11 @@ auc_robustness_lbm <- function(con, pi, rho, nr, nc) {
 rob_block_lbm <- function( con, pi, rho, nr, nc) {
   if (length(pi) == 1) return(robustness_lbm(con, pi, rho, nr, nc, ext_seq = "uniform"))
   X <- partitions::compositions(nr, length(pi))
+  X <- X[,colSums(X==0) == 0]# Test, a enelever
   pi <- rev(pi)
   con <- con[rev(seq(nrow(con))),,drop = FALSE]
   pmult <- apply(X, 2, function(x) dmultinom(x, prob = pi))
+  pmult <- pmult/sum(pmult)# Test a enlever
   rob <- rep(1,nr+1)
   storage.mode(X) <- "numeric"
   cumX <- Rfast::colCumSums(X)
