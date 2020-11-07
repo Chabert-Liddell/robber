@@ -16,16 +16,23 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(robber)
-library(ggplot2)
-library(dplyr)
-library(purrr)
-library(tidyr)
-library(tibble)
+#library(ggplot2)
+#library(dplyr)
+library(tidyverse)
+# library(purrr)
+# library(tidyr)
+# library(tibble)
 ```
 
 In what follows, we will use \code{robber} to illustrate how different 
 set of parameters of block models, representing differents topologies of 
 network has an influence on the robustness of bipartite ecological networks.
+
+```{r}
+data("web_of_life")
+net <- web_of_life[[100]]
+```
+
 
 We will compare set of networks that all have the same number of rows,
 columns and density. We select those numbers such that the maximum number for
@@ -71,6 +78,95 @@ bind_cols(rob_fun) %>%
 
 # ggsave("rob_function.png", path = "~/Documents/robustness/robustness/image/",
        # width = 6, height = 4)
+```
+
+
+```{r}
+rob_emp_unif <- robustness_emp(net$net)
+rob_emp_dec <- robustness_emp(net$net, ext_seq = "decreasing")
+rob_emp_inc <- robustness_emp(net$net, ext_seq = "increasing")
+lbm_param <- get_lbm_param(net$net)
+rob_lbm_unif <- do.call(robustness_lbm, lbm_param)
+rob_lbm_dec <- do.call(robustness_lbm, c(lbm_param, ext_seq = "decreasing"))
+rob_lbm_inc <- do.call(robustness_lbm, c(lbm_param, ext_seq = "increasing"))
+```
+```{r}
+rob_fun <- lapply(
+  X = seq_len(5),
+  FUN = function(i) {
+    A <- simulate_lbm(con = lbm_param$con, 
+                      pi = lbm_param$pi, 
+                      rho = lbm_param$rho, 
+                      nr = lbm_param$nr, 
+                      nc = lbm_param$nc)$A
+    return(list(unif = robustness_emp(A)$fun,
+           dec = robustness_emp(A, ext_seq = "decreasing")$fun,
+           inc = robustness_emp(A, ext_seq = "increasing")$fun))
+  }
+)
+```
+
+
+```{r}
+map_dfc(rob_fun, "unif") %>% 
+  mutate(`Primary Extinctions` = seq.int(0, nrow(net$net))/nrow(net$net)) %>% 
+  pivot_longer(cols = - `Primary Extinctions`,
+               names_to = "Net",
+               values_to = "Robustness") %>% 
+  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
+  geom_step(linetype = "dashed", show.legend = FALSE) +
+  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
+           y = rob_lbm_unif$fun,
+           size = 1.3) +
+  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
+           y = rob_emp_unif$fun,
+           size = 1, col = "blue") +
+  theme_minimal(base_size = 15)
+```
+
+```{r}
+map_dfc(rob_fun, "dec") %>% 
+  mutate(`Primary Extinctions` = seq.int(0, nrow(net$net))/nrow(net$net)) %>% 
+  pivot_longer(cols = - `Primary Extinctions`,
+               names_to = "Net",
+               values_to = "Robustness") %>% 
+  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
+  geom_step(linetype = "dashed", show.legend = FALSE) +
+  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
+           y = rob_lbm_dec$fun,
+           size = 1.3) +
+  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
+           y = rob_emp_dec$fun,
+           size = 1, col = "blue") +
+  theme_minimal(base_size = 15)
+```
+
+```{r}
+map_dfc(rob_fun, "inc") %>% 
+  mutate(`Primary Extinctions` = seq.int(0, nrow(net$net))/nrow(net$net)) %>% 
+  pivot_longer(cols = - `Primary Extinctions`,
+               names_to = "Net",
+               values_to = "Robustness") %>% 
+  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
+  geom_step(linetype = "dashed", show.legend = FALSE) +
+  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
+           y = rob_lbm_inc$fun,
+           size = 1.3) +
+  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
+           y = rob_emp_inc$fun,
+           size = 1, col = "blue") +
+  theme_minimal(base_size = 15)
+```
+
+```{r}
+bind_cols(rob_fun) %>% 
+  mutate(`Primary Extinctions` = seq.int(0, lbm_param$nr)/lbm_param$nr) %>% 
+  pivot_longer(cols = contains("..."), names_to = c( "extinction", "index"), 
+               names_pattern = "(.*)...(.)", values_to = "Robustness") %>% 
+  ggplot(aes(x = `Primary Extinctions`,
+             y = Robustness, col = index)) +
+  geom_line(linetype = "dashed") +
+  facet_wrap(~extinction)
 ```
 
 
@@ -401,6 +497,7 @@ robustness_lbm(con, pi, rho, nr, nc, ext_seq = "decreasing")$auc
 skimr::skim(res_strange)
 res_strange %>% 
   pivot_longer(cols = where(is.numeric), names_to = "Method", values_to = "Robustness") %>% 
+  filter(Method %in% c("inc_mc", "inc_lbm")) %>% 
   # mutate(
   #   Extinction = case_when(
   #     Method == "unif" ~ "Uniform",
@@ -408,7 +505,7 @@ res_strange %>%
   #     Method == "dec" ~ "Decreasing"
   #   )) %>% 
   ggplot(aes(x = Robustness, fill = Method, linetype = Method)) +
-  geom_density(alpha = .2) +
+  geom_density(alpha = .3) +
   ylab(label = "") +
 #  facet_wrap(~ Model) +
   theme_bw(base_size = 15)
