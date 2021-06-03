@@ -12,15 +12,30 @@
 #' * \code{"natural"} primary extinctions sequences with the block ordering given
 #'   in the function parameter.
 #' * \code{"blocks"} primary extinctions sequences for all blocks permutation.
-#' @return A list of size 3 except for \code{ext_seq = "blocks"}:
+#' @param method A string, the method used to compute the robustness by block.
+#' One of:
+#'   * \code{"exact"} (the default), average on all possible networks
+#'   * \code{"no_empty_block"} restricts the networks space to the ones with no
+#'   empty block of primary species
+#'   * \code{"expected"} restricts the networks space to the ones that have
+#'   approximately the same number of species per block than the expected one.
+#' Do not do anything for \code{ext_seq = "uniform"}.
+#' @param approx_threshold A numeric, the maximum size of the possible block
+#' partition allowed for exact robustness by block calculation. Higher threshold
+#' gives more precise results at the cost of computation times and possibly memory
+#' problem. Do not do anything for \code{ext_seq = "uniform"}. When the threshold
+#' is exceeded the robustness is computed by a Monte Carlo approximation with
+#' \code{approx_threshold} number of samples.
+#' @param net A network, if given, the function will fit a LBM to obtain the
+#' parameters of the network and then compute the robustness.
+#' @param ... Option to be passed to get_lbm_param function.
+#' @return A list and a robber type object:
 #' * \code{$fun} the robustness function, a vector of size \code{nr +1}
 #' * \code{$auc} the area under the curve of the robustness function
 #' * \code{$block} a vector of size \code{length(pi)}, the block ordering for
 #'   primary extinctions sequence by blocks. \code{NULL} if \code{ext_seq = "uniform"}.
-#'
-#'   If \code{ext_seq = "blocks"}, then a list of length QR!,
-#'   where QR is the length of the parameter pi. Each element of the list is a
-#'   list of size 3 as above.
+#' * \code{$model}, \code{$method}, \code{$ext_seq}, \code{$param}.
+
 #' @export
 #'
 #' @examples
@@ -29,22 +44,24 @@
 #' rho <- c(1/3, 2/3)
 #' nr <- 50
 #' nc <- 30
-#' my_rob <- robustness_lbm(con, pi, rho, nr, nc)
+#' my_rob <- robustness_lbm(con, pi, rho, nr, nc, ext_seq = "natural")
 #' my_rob$fun
 #' my_rob$auc
-#'
-#' #' con <- matrix(c(.5,.3,.3,.1), 2, 2)
-#' pi  <- c(.25,.75)
-#' rho <- c(1/3, 2/3)
-#' nr <- 50
-#' nc <- 30
-#' my_rob <- robustness_lbm(con, pi, rho, nr, nc, ext_seq = "blocks")
-#' length(my_rob)
-#' my_rob[[1]]$fun
-#' my_rob[[1]]$auc
-#' my_rob[[2]]$fun
-#' my_rob[[2]]$auc
-robustness_lbm <- function( con, pi, rho, nr, nc, ext_seq = "uniform") {
+#' # A easier alternative way, if you don't know the parameters of the network:
+#' data(hostparasite)
+#' (robustness_lbm(net = hostparasite, ncores = 1L))
+robustness_lbm <- function(con = NULL, pi = NULL, rho = NULL,
+                           nr = NULL, nc = NULL,
+                           ext_seq = "uniform", method = "exact",
+                           approx_threshold = 1e4, net = NULL, ...) {
+  if(! is.null(net)) {
+    param <- get_lbm_param(net, ... = ...)
+    con <- param$con
+    pi <- param$pi
+    rho <- param$rho
+    nr <- param$nr
+    nc <- param$nc
+  }
   if (any(con >1 | con <0)) {
     stop("Connectivity parameters should be between 0 and 1.")
   }
@@ -64,52 +81,74 @@ robustness_lbm <- function( con, pi, rho, nr, nc, ext_seq = "uniform") {
         for (q in seq_along(rho)) {
           result <- result + exp(seq.int(nr, 0) * log(delta[q]) ) * rho[q]
         }
-        return(list(fun = 1-result,
-                    auc = sum(1-result)/nr,
-                    block = NULL))
+        result <-
+          list(
+            model = "lbm",
+             ext_seq = ext_seq,
+             fun = 1-result,
+             auc = sum(1-result)/nr,
+             block = NULL,
+             method = method,
+             param = list(con = con, pi = pi, rho = rho, nr = nr, nc = nc),
+             sd = sqrt(do.call(var_fun_unif_lbm,
+                          list(con = con, pi = pi, rho = rho, nr = nr, nc = nc))))
+        class(result) <- "robber"
+        return(result)
       },
       "increasing" = {
         k_seq <- order(con %*% rho, decreasing = TRUE)
         pi <- pi[k_seq]
         con <- con[k_seq, , drop=FALSE]
-        result <- rob_block_lbm(con, pi, rho, nr, nc)
+        result <- rob_block_lbm(con, pi, rho, nr, nc, method, approx_threshold)
         result$block <- k_seq
+        result$method <- method
+        result$param <- list(con = con, pi = pi, rho = rho,
+                                     nr = nr, nc = nc)
+        class(result) <- "robber"
         return( result )
       },
       "decreasing" = {
         k_seq <- order(con %*% rho, decreasing = FALSE)
         pi <- pi[k_seq]
         con <- con[k_seq, , drop=FALSE]
-        result <- rob_block_lbm(con, pi, rho, nr, nc)
+        result <- rob_block_lbm(con, pi, rho, nr, nc, method, approx_threshold)
         result$block <- k_seq
+        result$method <- method
+        result$param <- list(con = con, pi = pi, rho = rho,
+                             nr = nr, nc = nc)
+        class(result) <- "robber"
         return( result )
       },
       "natural" = {
         k_seq <- seq(length(pi))
-        result <- rob_block_lbm(con, pi, rho, nr, nc)
+        result <- rob_block_lbm(con, pi, rho, nr, nc, method, approx_threshold)
         result$block <- k_seq
+        result$method <- method
+        result$param <- list(con = con, pi = pi, rho = rho,
+                             nr = nr, nc = nc)
+        class(result) <- "robber"
         return( result )
       },
-      "blocks" = {
-        K <- length(pi)
-        perm <- gtools::permutations(n = K, r = K)
-        res <- vector("list", factorial(K))
-        for (k in seq(factorial(K))) {
-          k_seq <- perm[k,]
-          pi_seq <- pi[k_seq]
-          con_seq <- con[k_seq, , drop=FALSE]
-          result <- rob_block_lbm(con_seq, pi_seq, rho, nr, nc)
-          result$block <- k_seq
-          res[[k]] <- result
-        }
-        return(res)
-      }
+      # "blocks" = {
+      #   K <- length(pi)
+      #   perm <- gtools::permutations(n = K, r = K)
+      #   res <- vector("list", factorial(K))
+      #   for (k in seq(factorial(K))) {
+      #     k_seq <- perm[k,]
+      #     pi_seq <- pi[k_seq]
+      #     con_seq <- con[k_seq, , drop=FALSE]
+      #     result <- rob_block_lbm(con_seq, pi_seq, rho, nr, nc, method, approx_threshold)
+      #     result$block <- k_seq
+      #     res[[k]] <- result
+      #   }
+      #   return(res)
+      # }
     )
 }
 
-#' @title Compute the AUC of the LBM robustness function
+#' @title Fast computation of the LBM robustness statistic for uniform extinctions
 #'
-#' This function provides much faster computation than \code{robustness_lbm} for
+#' @description This function provides much faster computation than \code{robustness_lbm} for
 #' the case where \code{ext_seq = "uniform"}, when just the AUC statistic is
 #' needed and the robustness function is not needed. This is particularly
 #' useful if \code{nr} gets large.
@@ -144,50 +183,61 @@ auc_robustness_lbm <- function(con, pi, rho, nr, nc) {
 }
 
 
-rob_block_lbm <- function( con, pi, rho, nr, nc) {
+rob_block_lbm <- function( con, pi, rho, nr, nc, method = "exact", approx_threshold = 1e4) {
   if (length(pi) == 1) return(robustness_lbm(con, pi, rho, nr, nc, ext_seq = "uniform"))
-  X <- partitions::compositions(nr, length(pi))
-  X <- X[,colSums(X==0) == 0]# Test, a enelever
+  if (choose(nr + nrow(con) -1, nr) > approx_threshold) {
+    approx <- TRUE
+    message(paste0("Calculation by Monte Carlo because ",
+                   choose(nr + nrow(con) -1, nr),
+                   " is greater than approx threshold = ",
+                   approx_threshold,
+                   ". \n If you don't want this change, set approx_threshold to a higher value."))
+  } else {
+    approx <- FALSE
+  }
+  rob <- rep(1,nr+1)
   pi <- rev(pi)
   con <- con[rev(seq(nrow(con))),,drop = FALSE]
-  pmult <- apply(X, 2, function(x) dmultinom(x, prob = pi))
-  pmult <- pmult/sum(pmult)# Test a enlever
-  rob <- rep(1,nr+1)
-  storage.mode(X) <- "numeric"
-  cumX <- Rfast::colCumSums(X)
-  for (q in seq_along(rho)) {
+  if (method == "expected") {
+    X <- nr*pi
+    cumX <- cumsum(X)
     for (m in seq(0, nr)) {
-      rob[m+1] <- rob[m+1] - rho[q] * sum(pmult *
-                                            Rfast::rowprods(
-                                              vapply(seq_along(pi),
-                                                     function(i) (1-con[i,q])**pmax(0,pmin(X[i,], cumX[i,] - m)),
-                                                     FUN.VALUE = rep(0, ncol(X)))))
+      rob[m+1] <- rob[m+1] -
+        as.vector(rho %*% exp(colSums(pmax(0,pmin(X, cumX - m))*log(1-con))))
+    }
+    return(list(fun = rob,
+                auc = sum(rob)/nr))
+  } else {
+    if (! approx) {
+      X <- partitions::compositions(nr, length(pi))
+    } else {
+      X <- stats::rmultinom(n = approx_threshold, size = nr, prob = pi)
     }
   }
-  # rob
-  # result <- rep(0,nr+1)
-  # K <- length(pi)
-  # order_prob <- matrix(0, nr+1, K)
-  # order_prob[nr+1, K] <- 0
-  # for (k in seq_len(K-1)) {
-  #   for (m in seq.int(0, nr-1)) {
-  #     order_prob[m+1, k] <-
-  #       sum(stats::dbinom(x = seq.int(0, nr-m-1), size = nr,
-  #                         prob = 1-sum(pi[1:k])) -
-  #             stats::dbinom(x = seq.int(0, nr-m-1), size = nr,
-  #                           prob = 1 - sum(pi[1:k]) + pi[k]))
-  #   }
-  # }
-  # order_prob[,K] <- 1 - rowSums(order_prob)
-  # tmp_rob <- matrix(0, nr+1, length(rho))
-  # for(m in seq.int(0, nr)) {
-  #   for(k in seq_len(K)) {
-  #     tmp_rob[m+1,] <- tmp_rob[m+1,] +
-  #       (( (pi[1:k]/sum(pi[1:k])) %*% (1-con[1:k, , drop=FALSE]))**(m) *
-  #          order_prob[m+1, k])
-  #   }
-  # }
-  # result[1:(nr+1)] <- as.vector(tmp_rob %*% rho)[(nr+1):1]
-  return(list(fun = rob,
+  if (method == "no_empty_block") {
+    X <- X[,colSums(X==0) == 0]
+  }
+  if (approx) {
+    pmult <- 1/ncol(X)
+  } else {
+    pmult <- apply(X, 2, function(x) stats::dmultinom(x, prob = pi))
+  }
+  if (method == "no_empty_block" & ! approx) {
+    pmult <- pmult/sum(pmult)
+  }
+  cumX <- apply(X, 2, cumsum)
+  for (q in seq_along(rho)) {
+    for (m in seq(0, nr)) {
+      rob[m+1] <- rob[m+1] - rho[q] *
+        sum(pmult * exp ( rowSums( log(
+          vapply(seq_along(pi),
+                 function(i) (1-con[i,q])**pmax(0,pmin(X[i,], cumX[i,] - m)),
+                 FUN.VALUE = rep(0, ncol(X))))
+          )))
+    }
+  }
+  return(list(model = "lbm",
+              fun = rob,
               auc = sum(rob)/nr))
 }
+

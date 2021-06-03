@@ -1,23 +1,22 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-robber
-======
+
+# robber
 
 <!-- badges: start -->
-[![R build status](https://github.com/Chabert-Liddell/robber/workflows/R-CMD-check/badge.svg)](https://github.com/Chabert-Liddell/robber/actions) [![Codecov test coverage](https://codecov.io/gh/Chabert-Liddell/robber/branch/master/graph/badge.svg)](https://codecov.io/gh/Chabert-Liddell/robber?branch=master) <!-- badges: end -->
+
+[![R build
+status](https://github.com/Chabert-Liddell/robber/workflows/R-CMD-check/badge.svg)](https://github.com/Chabert-Liddell/robber/actions)
+[![Codecov test
+coverage](https://codecov.io/gh/Chabert-Liddell/robber/branch/master/graph/badge.svg)](https://codecov.io/gh/Chabert-Liddell/robber?branch=master)
+<!-- badges: end -->
 
 ROBustness using Blockmodel for Ecological network R package
 
-Installation
-------------
+## Installation
 
-You can install the released version of robber from [CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("robber")
-```
-
-And the development version from [GitHub](https://github.com/) with:
+You can install the developpement version of robber
+[GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")

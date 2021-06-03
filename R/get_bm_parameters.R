@@ -30,16 +30,16 @@
 #' param <- get_lbm_param(A, nbCores = 1L)
 #' do.call(auc_robustness_lbm, param)
 get_lbm_param <- function(A, model_size = NULL, ...) {
-  my_net <- GREMLIN::defineNetwork(A, typeInter = "inc",
+  my_net <- GREMLINS::defineNetwork(A, typeInter = "inc",
                                    rowFG = "row", colFG = "col")
   if (any(is.na(A))) {
     if (is.null(model_size)) {
-      my_lbm <- GREMLIN::multipartiteBM(list(my_net),
+      my_lbm <- GREMLINS::multipartiteBM(list(my_net),
                                         v_distrib = "bernoulli",
                                         namesFG = c("row", "col"),
                                         verbose = FALSE, ...)
     } else {
-      my_lbm <- GREMLIN::multipartiteBMFixedModel(list(my_net),
+      my_lbm <- GREMLINS::multipartiteBMFixedModel(list(my_net),
                                                   v_distrib = "bernoulli",
                                                   namesFG = c("row", "col"),
                                                   v_K = model_size,
