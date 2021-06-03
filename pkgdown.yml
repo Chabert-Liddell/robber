@@ -1,0 +1,8 @@
+pandoc: 2.7.3
+pkgdown: 1.6.1
+pkgdown_sha: ~
+articles:
+  plot_article: plot_article.html
+  topological-analysis: topological-analysis.html
+last_built: 2021-06-03T16:06Z
+
