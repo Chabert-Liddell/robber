@@ -35,7 +35,8 @@ Suggests:
     tidyverse,
     ggridges,
     pammtools,
-    markdown
+    markdown,
+    patchwork
 Language: en-US
 LinkingTo: 
     Rcpp
