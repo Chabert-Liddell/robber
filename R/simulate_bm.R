@@ -59,8 +59,8 @@ simulate_lbm <- function(con, pi, rho, nr, nc, method = "gnp") {
     if (any(con >1 | con <0)) {
       stop("Connectivity parameters should be between 0 and 1.")
     }
-    W <- sample(x = seq(qc), size = nc, replace = TRUE, prob = pi)
-    Z <- sample(x = seq(qr), size = nr, replace = TRUE, prob = rho)
+    W <- sample(x = seq(qc), size = nc, replace = TRUE, prob = rho)
+    Z <- sample(x = seq(qr), size = nr, replace = TRUE, prob = pi)
     for (k in seq(qr)) {
       for (q in seq(qc)) {
         A[Z == k, W == q] <- igraph::as_incidence_matrix(

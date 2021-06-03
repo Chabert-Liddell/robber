@@ -2,12 +2,7 @@
 % Please edit documentation in R/robustness_bm.R
 \name{auc_robustness_lbm}
 \alias{auc_robustness_lbm}
-\title{Compute the AUC of the LBM robustness function
-
-This function provides much faster computation than \code{robustness_lbm} for
-the case where \code{ext_seq = "uniform"}, when just the AUC statistic is
-needed and the robustness function is not needed. This is particularly
-useful if \code{nr} gets large.}
+\title{Fast computation of the LBM robustness statistic for uniform extinctions}
 \usage{
 auc_robustness_lbm(con, pi, rho, nr, nc)
 }
@@ -28,8 +23,6 @@ The AUC of the LBM Robustness function for uniform primary
 extinctions sequences.
 }
 \description{
-Compute the AUC of the LBM robustness function
-
 This function provides much faster computation than \code{robustness_lbm} for
 the case where \code{ext_seq = "uniform"}, when just the AUC statistic is
 needed and the robustness function is not needed. This is particularly

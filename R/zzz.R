@@ -1,3 +1,3 @@
 .onAttach <- function(libname, pkgname) {
-  packageStartupMessage("Welcome to my package")
+  packageStartupMessage("Estimation of the Robustness of Bipartite Ecological Network!")
 }
