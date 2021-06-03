@@ -23,7 +23,7 @@ normalize_lbm_con <- function(dens, con, pi, rho, nr = NULL, nc = NULL) {
 #' @param new_nr The number of rows of the normalized networks. Default to 100.
 #' @param new_nc The number of columns of the normalized networks.
 #'   Default to 100.
-#' @param ext_seq The distrubution of the primary extinction sequence used to
+#' @param ext_seq The distribution of the primary extinction sequence used to
 #'  compare the networks. One of \code{c("uniform", "decreasing", "increasing")}.
 #'  Default to \code{"uniform"}.
 #'

@@ -28,7 +28,7 @@ Default to  0.0156.}
 \item{new_nc}{The number of columns of the normalized networks.
 Default to 100.}
 
-\item{ext_seq}{The distrubution of the primary extinction sequence used to
+\item{ext_seq}{The distribution of the primary extinction sequence used to
 compare the networks. One of \code{c("uniform", "decreasing", "increasing")}.
 Default to \code{"uniform"}.}
 }

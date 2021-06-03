@@ -4,7 +4,18 @@
 \alias{robustness_lbm}
 \title{Robustness for LBM}
 \usage{
-robustness_lbm(con, pi, rho, nr, nc, ext_seq = "uniform")
+robustness_lbm(
+  con = NULL,
+  pi = NULL,
+  rho = NULL,
+  nr = NULL,
+  nc = NULL,
+  ext_seq = "uniform",
+  method = "exact",
+  approx_threshold = 10000,
+  net = NULL,
+  ...
+)
 }
 \arguments{
 \item{con}{A matrix, the connectivity parameter}
@@ -28,18 +39,38 @@ by increasing and decreasing row blocks connection probability,
 in the function parameter.
 \item \code{"blocks"} primary extinctions sequences for all blocks permutation.
 }}
+
+\item{method}{A string, the method used to compute the robustness by block.
+One of:
+\itemize{
+\item \code{"exact"} (the default), average on all possible networks
+\item \code{"no_empty_block"} restricts the networks space to the ones with no
+empty block of primary species
+\item \code{"expected"} restricts the networks space to the ones that have
+approximately the same number of species per block than the expected one.
+Do not do anything for \code{ext_seq = "uniform"}.
+}}
+
+\item{approx_threshold}{A numeric, the maximum size of the possible block
+partition allowed for exact robustness by block calculation. Higher threshold
+gives more precise results at the cost of computation times and possibly memory
+problem. Do not do anything for \code{ext_seq = "uniform"}. When the threshold
+is exceeded the robustness is computed by a Monte Carlo approximation with
+\code{approx_threshold} number of samples.}
+
+\item{net}{A network, if given, the function will fit a LBM to obtain the
+parameters of the network and then compute the robustness.}
+
+\item{...}{Option to be passed to get_lbm_param function.}
 }
 \value{
-A list of size 3 except for \code{ext_seq = "blocks"}:
+A list and a robber type object:
 \itemize{
 \item \code{$fun} the robustness function, a vector of size \code{nr +1}
 \item \code{$auc} the area under the curve of the robustness function
 \item \code{$block} a vector of size \code{length(pi)}, the block ordering for
 primary extinctions sequence by blocks. \code{NULL} if \code{ext_seq = "uniform"}.
-
-If \code{ext_seq = "blocks"}, then a list of length QR!,
-where QR is the length of the parameter pi. Each element of the list is a
-list of size 3 as above.
+\item \code{$model}, \code{$method}, \code{$ext_seq}, \code{$param}.
 }
 }
 \description{
@@ -52,19 +83,10 @@ pi  <- c(.25,.75)
 rho <- c(1/3, 2/3)
 nr <- 50
 nc <- 30
-my_rob <- robustness_lbm(con, pi, rho, nr, nc)
+my_rob <- robustness_lbm(con, pi, rho, nr, nc, ext_seq = "natural")
 my_rob$fun
 my_rob$auc
-
-#' con <- matrix(c(.5,.3,.3,.1), 2, 2)
-pi  <- c(.25,.75)
-rho <- c(1/3, 2/3)
-nr <- 50
-nc <- 30
-my_rob <- robustness_lbm(con, pi, rho, nr, nc, ext_seq = "blocks")
-length(my_rob)
-my_rob[[1]]$fun
-my_rob[[1]]$auc
-my_rob[[2]]$fun
-my_rob[[2]]$auc
+# A easier alternative way, if you don't know the parameters of the network:
+data(hostparasite)
+(robustness_lbm(net = hostparasite, ncores = 1L))
 }

@@ -4,7 +4,15 @@
 \alias{robustness_emp}
 \title{Empirical Robustness of a Network}
 \usage{
-robustness_emp(A, ext_seq = "uniform", nb_iter = 300, net = "bipartite")
+robustness_emp(
+  A,
+  ext_seq = "uniform",
+  nb_iter = 300,
+  net_type = "bipartite",
+  method = "ordered",
+  power = 1,
+  block = NULL
+)
 }
 \arguments{
 \item{A}{A binary incident matrix}
@@ -15,14 +23,38 @@ one of \code{"uniform"}, the default for uniform extinctions sequences,
 by increasing and decreasing degree order sequence on the row species}
 
 \item{nb_iter}{An integer, the number of generated sequences. Default to
-\code{300}}
+\code{300}.}
 
-\item{net}{A string, the type of network. Only "bipartite".}
+\item{net_type}{A string, the type of network. For now, only "bipartite" is
+available.}
+
+\item{method}{A string used when \code{ext_seq = "decreasing"} or
+\code{ext_seq = "increasing"}:
+\itemize{
+\item \code{"linear"} (default) set an extinction
+probability for each row species that is linear in its degree. It is a
+shortcut for \code{method = "power"} and \code{power = 1}.
+\item \code{"ordered"} strictly follow the degree order, ie. the most
+connected species will always goes last for \code{ext_seq = "increasing"}
+or first for \code{ext_seq = "decreasing"}.
+}}
+
+\item{power}{An integer (default to 1). Only used when
+\code{method = "power"},
+the power to which the degree are elevated to compute the primary extinctions
+sequences for \code{"increasing"} and \code{"decreasing"} ext_seq. For 1, it
+is equivalent to \code{method = "linear"}, for 0, it is the same as
+\code{ext_seq = "uniform"}. The largest the number the closest it will be to
+\code{method = "ordered"}.}
+
+\item{block}{A vector of row species memberships for \code{method = "block"}}
 }
 \value{
-A list of size 2:
+A list (robber object) with the following fields:
 \itemize{
+\item \code{$model}, \code{$ext_seq}, \code{$method}, \code{power}
 \item \code{$fun} is the robustness function, a vector of size \code{(nrow(A) +1)}
+\item \code{$sd} Standard deviation of the secondary extinctions
 \item \code{$auc} the area under the curve of the robustness function
 }
 }

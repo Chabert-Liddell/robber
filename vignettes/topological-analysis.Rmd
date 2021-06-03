@@ -3,40 +3,288 @@ title: "Topological Analysis"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Topological Analysis}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 6,
+  fig.height = 4
 )
 ```
 
 ```{r setup}
 library(robber)
-#library(ggplot2)
-#library(dplyr)
 library(tidyverse)
-# library(purrr)
-# library(tidyr)
-# library(tibble)
+library(igraph)
+theme_set(theme_bw(base_size = 15))
 ```
 
-In what follows, we will use \code{robber} to illustrate how different 
-set of parameters of block models, representing differents topologies of 
-network has an influence on the robustness of bipartite ecological networks.
+In what follows, we will use `robber` to illustrate how different set of
+parameters of block models, representing different mesoscale structure
+of networks has an influence on the robustness of bipartite ecological
+networks. By doing so, we will review the main functions of the package.
+
+# Robustness of real bipartite ecological networks
+
+We load 3 different networks, a host-parasite, a seed-dispersal and a
+pollination's one.
 
 ```{r}
-data("web_of_life")
-net <- web_of_life[[100]]
+data("hostparasite", package = "robber")
+data("seeddispersal", package = "robber")
+data("pollination", package = "robber")
 ```
 
+They have the following richness and connectance:
+
+```{r}
+print(paste0("Host-Parasite: ", nrow(hostparasite), " ", 
+           ncol(hostparasite), " ", mean(hostparasite)), sep = ",")
+print(paste0("Seed Dispersal: ", nrow(seeddispersal), " ", 
+           ncol(seeddispersal), " ", mean(seeddispersal)), sep = ",")
+print(paste0("Pollination: ", nrow(pollination), " ", 
+           ncol(pollination), " ", mean(pollination)), sep = ",")
+```
+
+## Analyzing the robustnes of a host-parasite network
+
+To compute the empirical robustness, we can use the function
+`robustness_emp()` which uses a Monte Carlo simulation. Several options
+are available to choose the type of extinctions sequences and the way
+they are computed. The function return a vector of remaining species
+after each extinction (\$fun) and the robustness statistic as the area
+under the curve (\$auc). For example, using the host-parasite network
+and the default uniform extinction sequence:
+
+```{r}
+(rob_emp_unif <- robustness_emp(hostparasite))
+plot(rob_emp_unif)
+```
+
+We can infer a Latent Block Model (LBM) to obtain a sparse parametric
+representation of the network by regrouping species into blocks. This
+can be done automatically with this package:
+
+```{r}
+(lbm_param <- get_lbm_param(hostparasite, ncores = 1L))
+```
+
+We can see that the network is divided into 4 blocks (2 groups of hosts
+and 2 groups of parasites). The network as a classic core-periphery
+structure, with a very connected core ($.95$) composed of about a third
+of the species.
+
+Robber compute the robustness as the the robustness function integrated
+over all possible networks which arise from the same set of Block Model
+parameters.
+
+Given the parameters, we can compute the LBM robustness:
+
+```{r}
+(rob_lbm_unif <- do.call(robustness_lbm, lbm_param))
+```
+
+As we can see the two robustness statistics are very close:
+
+```{r}
+rob_emp_unif$auc
+rob_lbm_unif$auc
+```
+
+And we can plot the two curves (the empirical one in blue and the LBM
+one in black):
+
+```{r}
+plot(rob_emp_unif) + 
+  plot(rob_lbm_unif, add = TRUE)
+```
+
+Using the above parameters we may simulate networks from the same set of
+LBM parameters, the black line is the average of all the red dotted line
+which are the robustness function of particular realization of networks
+issued from the same distribution:
+
+```{r}
+rob_fun <- lapply(
+  X = seq_len(10),
+  FUN = function(i) {
+    A <- simulate_lbm(con = lbm_param$con, 
+                      pi = lbm_param$pi, 
+                      rho = lbm_param$rho, 
+                      nr = lbm_param$nr, 
+                      nc = lbm_param$nc)$A
+    return(list(unif = robustness_emp(A),
+           dec = robustness_emp(A, ext_seq = "decreasing"),
+           inc = robustness_emp(A, ext_seq = "increasing")))
+  }
+)
+```
+
+```{r}
+pu <- plot(rob_emp_unif) + 
+  plot(rob_lbm_unif, add = TRUE) +
+  plot(rob_fun[[1]]$unif, add = TRUE, lty = "dotted", col = "red") +
+  plot(rob_fun[[2]]$unif, add = TRUE, lty = "dotted", col = "red") +
+  plot(rob_fun[[3]]$unif, add = TRUE, lty = "dotted", col = "red") +
+  plot(rob_fun[[4]]$unif, add = TRUE, lty = "dotted", col = "red") +
+  plot(rob_fun[[5]]$unif, add = TRUE, lty = "dotted", col = "red") +
+  ggtitle("Uniform")
+pu
+```
+
+Computing the robustness for other extinctions sequence gives
+complementary information on the network. For example extinctions by
+decreasing or increasing number of connections may give an information
+about a worst-case and best-case scenario.
+
+```{r}
+rob_emp_dec <- robustness_emp(hostparasite, ext_seq = "decreasing")
+rob_emp_inc <- robustness_emp(hostparasite, ext_seq = "increasing")
+rob_emp_dec$auc
+rob_emp_inc$auc
+```
+
+The above method is very sensitive to the network sampling, in
+particular for increasing connection. One way to counter that is to
+consider that the order of extinction is a function of the degree, for
+example it might depends linearly on it.
+
+```{r}
+rob_emp_dec_lin <- robustness_emp(hostparasite, ext_seq = "decreasing", 
+                                  method = "linear")
+rob_emp_inc_lin <- robustness_emp(hostparasite, ext_seq = "increasing", 
+                                  method = "linear")
+rob_emp_dec_lin$auc
+rob_emp_inc_lin$auc
+```
+
+As we can see the obtained robustness values are less extreme and closer
+to the one of a uniform primary extinctions distribution.
+
+Using the LBM, we can compute a robustness where the extinction
+distribution is dependent of the block memberships of the primary
+species. For example, by ordering blocks by their connection
+probabilities, and extinguishing species base on this order, we obtain:
+
+```{r}
+rob_lbm_dec <- do.call(robustness_lbm, c(lbm_param, ext_seq = "decreasing"))
+rob_lbm_inc <- do.call(robustness_lbm, c(lbm_param, ext_seq = "increasing"))
+rob_lbm_dec$auc
+rob_lbm_inc$auc
+```
+
+```{r}
+plot(rob_lbm_unif, col = "black", lty = 1) + 
+  plot(rob_emp_unif, add = TRUE, col = "blue", lty = 2) +
+  plot(rob_emp_dec, add = TRUE, lty = 3, col = "blue") +
+  plot(rob_emp_dec_lin, add = TRUE, lty = 4, col = "blue") +
+  plot(rob_emp_inc, add = TRUE, lty = 3, col = "blue") +
+  plot(rob_emp_inc_lin, add = TRUE, lty = 4, col = "blue") +
+  plot(rob_lbm_dec, add = TRUE, lty = 1, col = "black") +
+  plot(rob_lbm_inc, add = TRUE, lty = 1, col = "black") +
+  ggtitle("Robustness of hostparasite")
+```
+
+## Comparing the robustness of 3 networks
+
+How robust is the robustness of the host-parasite network compare to the
+one of the pollination and seed dispersal's one? As we have seen above,
+the richness and the connectance of these networks are different and it
+is difficult to know which part of this difference is due sampling
+method and effort. Let first analyze the mesoscale structure of the
+mutualistic networks.
+
+```{r}
+pl_param <- get_lbm_param(pollination, ncores = 1L)
+sd_param <- get_lbm_param(seeddispersal, ncores = 1L)
+```
+
+```{r}
+pl_param
+```
+
+For the pollination network, we have $2$ blocks of plants and $2$ block
+of pollinators. About a third of the plants belong to a block which is
+equally connected to the whole network. The rest interacts with a high
+probability with about a fifth of the pollinators and very rarely with
+the rest of the pollinators.
+
+```{r}
+sd_param
+```
+
+The seed-dispersal networks has a more complex mesoscale structure with
+$4$ blocks of plants and $3$ blocks of birds. It has a kind of double
+core structure. We compare the three networks using the LBM robustness.
+
+```{r}
+pl_lbm_unif <- do.call(robustness_lbm, pl_param)
+pl_lbm_dec <- do.call(robustness_lbm, c(pl_param, ext_seq = "decreasing"))
+pl_lbm_inc <- do.call(robustness_lbm, c(pl_param, ext_seq = "increasing"))
+sd_lbm_unif <- do.call(robustness_lbm, sd_param)
+sd_lbm_dec <- do.call(robustness_lbm, c(sd_param, ext_seq = "decreasing"))
+sd_lbm_inc <- do.call(robustness_lbm, c(sd_param, ext_seq = "increasing"))
+```
+
+```{r echo=FALSE}
+df <- data.frame(
+  Extinction = c("Uniform", "Increasing", "Decreasing"),
+  hostparasite = c(rob_lbm_unif$auc, rob_lbm_inc$auc, rob_lbm_dec$auc),
+  pollination = c(pl_lbm_unif$auc, pl_lbm_inc$auc, pl_lbm_dec$auc),
+  seeddispersal = c(sd_lbm_unif$auc, sd_lbm_inc$auc, sd_lbm_dec$auc))
+knitr::kable(df)
+```
+
+As we can see, for all three types of robustness, the seed-dispersal is
+more robust than the host-parasite network. The pollination network
+being less robust than the other 2. We wish to know which part is due to
+the difference in the richness and connectance of these networks and
+which part is due there different structure. For this, we will change
+the parameters of those networks, using the `compare_robustness()`
+function and compute a new robustness, where the difference depends
+solely on the mesoscale structure of these networks. For this, we
+normalize the networks so they have the connectance of the sparsest
+network (`pollination`) and the richness of the richest network
+(`seeddispersal` for row species and `pollination` for column species).
+
+```{r}
+comp_unif <- compare_robustness(list(lbm_param, pl_param, sd_param), 
+                   dens = .148, new_nr = 36, new_nc = 51)
+comp_inc <- compare_robustness(list(lbm_param, pl_param, sd_param), 
+                   dens = .148, new_nr = 36, new_nc = 51, ext_seq = "increasing")
+comp_dec <- compare_robustness(list(lbm_param, pl_param, sd_param), 
+                   dens = .148, new_nr = 36, new_nc = 51, ext_seq = "decreasing")
+```
+
+```{r echo = FALSE}
+dfc <- data.frame(
+  Extinction = c("Uniform", "Increasing", "Decreasing"),
+  hostparasite = c(comp_unif[[1]], comp_inc[[1]], comp_dec[[1]]),
+  pollination = c(comp_unif[[2]], comp_inc[[2]], comp_dec[[2]]),
+  seeddispersal = c(comp_unif[[3]], comp_inc[[3]], comp_dec[[3]]))
+knitr::kable(dfc)
+```
+
+While the robustness of `seeddispersal` is still the highest, we can see
+that `pollination` now have a higher robustness than `hostparasite`.
+Hence the lack of robustness of `pollination` compared to the other
+network was mainly due to its lower connectance and plant richness,
+rather than its particular mesoscale structure.
+
+# Comparing the influence of mesoscale structure on robustness
 
 We will compare set of networks that all have the same number of rows,
-columns and density. We select those numbers such that the maximum number for
-the robustness with uniform extinctions is approximately 0.5.
+columns and connectance. We select those numbers such that the upper
+bound for the robustness with uniform extinctions is approximately 0.5.
 
 ```{r set_constant}
 dens <- .0156
@@ -46,287 +294,341 @@ rob_er <- auc_robustness_lbm(matrix(dens, 1,1), 1, 1, nr, nc)
 rob_er
 ```
 
-Robber compute the robustness as the AUC of the robustness function integrated over
-all possible networks which arise from the same set of Block Model parameters.
-For example using the above parameters of a network with not particular structure,
-the black line is the average of all the dashed line which are the robustness function
-of particular realization of networks issued from the same distribution:
-
-```{r}
-rob_fun <- lapply(
-  X = seq_len(10),
-  FUN = function(i) {
-    A <- simulate_lbm(con = matrix(dens, 1, 1), 
-                      pi = 1, 
-                      rho = 1, 
-                      nr = nr, 
-                      nc = nc)$A
-    robustness_emp(A)$fun
-  }
-)
-bind_cols(rob_fun) %>% 
-  mutate(`Primary Extinctions` = seq.int(0, nr)/nr) %>% 
-  pivot_longer(cols = - `Primary Extinctions`,
-               names_to = "Net",
-               values_to = "Robustness") %>% 
-  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
-  geom_step(linetype = "dashed", show.legend = FALSE) +
-  annotate("step", x = seq.int(0, nr)/nr, 
-           y = robustness_lbm(matrix(dens, 1,1), 1, 1, nr, nc)$fun,
-           size = 2) +
-  theme_minimal(base_size = 15)
-
-# ggsave("rob_function.png", path = "~/Documents/robustness/robustness/image/",
-       # width = 6, height = 4)
-```
-
-
-```{r}
-rob_emp_unif <- robustness_emp(net$net)
-rob_emp_dec <- robustness_emp(net$net, ext_seq = "decreasing")
-rob_emp_inc <- robustness_emp(net$net, ext_seq = "increasing")
-lbm_param <- get_lbm_param(net$net)
-rob_lbm_unif <- do.call(robustness_lbm, lbm_param)
-rob_lbm_dec <- do.call(robustness_lbm, c(lbm_param, ext_seq = "decreasing"))
-rob_lbm_inc <- do.call(robustness_lbm, c(lbm_param, ext_seq = "increasing"))
-```
-```{r}
-rob_fun <- lapply(
-  X = seq_len(5),
-  FUN = function(i) {
-    A <- simulate_lbm(con = lbm_param$con, 
-                      pi = lbm_param$pi, 
-                      rho = lbm_param$rho, 
-                      nr = lbm_param$nr, 
-                      nc = lbm_param$nc)$A
-    return(list(unif = robustness_emp(A)$fun,
-           dec = robustness_emp(A, ext_seq = "decreasing")$fun,
-           inc = robustness_emp(A, ext_seq = "increasing")$fun))
-  }
-)
-```
-
-
-```{r}
-map_dfc(rob_fun, "unif") %>% 
-  mutate(`Primary Extinctions` = seq.int(0, nrow(net$net))/nrow(net$net)) %>% 
-  pivot_longer(cols = - `Primary Extinctions`,
-               names_to = "Net",
-               values_to = "Robustness") %>% 
-  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
-  geom_step(linetype = "dashed", show.legend = FALSE) +
-  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
-           y = rob_lbm_unif$fun,
-           size = 1.3) +
-  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
-           y = rob_emp_unif$fun,
-           size = 1, col = "blue") +
-  theme_minimal(base_size = 15)
-```
-
-```{r}
-map_dfc(rob_fun, "dec") %>% 
-  mutate(`Primary Extinctions` = seq.int(0, nrow(net$net))/nrow(net$net)) %>% 
-  pivot_longer(cols = - `Primary Extinctions`,
-               names_to = "Net",
-               values_to = "Robustness") %>% 
-  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
-  geom_step(linetype = "dashed", show.legend = FALSE) +
-  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
-           y = rob_lbm_dec$fun,
-           size = 1.3) +
-  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
-           y = rob_emp_dec$fun,
-           size = 1, col = "blue") +
-  theme_minimal(base_size = 15)
-```
-
-```{r}
-map_dfc(rob_fun, "inc") %>% 
-  mutate(`Primary Extinctions` = seq.int(0, nrow(net$net))/nrow(net$net)) %>% 
-  pivot_longer(cols = - `Primary Extinctions`,
-               names_to = "Net",
-               values_to = "Robustness") %>% 
-  ggplot(aes(`Primary Extinctions`, Robustness, col = Net)) +
-  geom_step(linetype = "dashed", show.legend = FALSE) +
-  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
-           y = rob_lbm_inc$fun,
-           size = 1.3) +
-  annotate("step", x = seq.int(0, nrow(net$net))/nrow(net$net), 
-           y = rob_emp_inc$fun,
-           size = 1, col = "blue") +
-  theme_minimal(base_size = 15)
-```
-
-```{r}
-bind_cols(rob_fun) %>% 
-  mutate(`Primary Extinctions` = seq.int(0, lbm_param$nr)/lbm_param$nr) %>% 
-  pivot_longer(cols = contains("..."), names_to = c( "extinction", "index"), 
-               names_pattern = "(.*)...(.)", values_to = "Robustness") %>% 
-  ggplot(aes(x = `Primary Extinctions`,
-             y = Robustness, col = index)) +
-  geom_line(linetype = "dashed") +
-  facet_wrap(~extinction)
-```
-
-
-
 ```{r echo=FALSE}
 mod <- matrix(c("a", 1, 1, "a"), 2, 2)
 cp  <- matrix(c("a", "a", "a", 1), 2, 2)
 ```
 
-We will consider 2 blocks of row species and 2 blocks of column species. 
+We will consider 2 blocks of row species and 2 blocks of column species.
 The parameters will be as followed:
 
-* $\pi$ The row blocks parameter will be set to [1/4, 3/4]
-    
-* $\rho$ The column blocks parameter will vary
-    
-* **con** The connectivity parameters between blocks will be set to 
-    represent 2 classic topologies: 
-    
-    + __Modular__ the shape of the connectivity matrix will be as follows:
-   
+-   $\pi$ The row blocks parameter will be set to [1/4, 3/4]
+
+-   $\rho$ The column blocks parameter will vary
+
+-   **con** The connectivity parameters between blocks will be set to
+    represent 2 classic topologies:
+
+    -   **Modular** the shape of the connectivity matrix will be as
+        follows:
+
 ```{r echo=FALSE}
      knitr::kable(mod)
 ```
 
-*     
-    + __Nested__ A classic Core-periphery with or without strong connection
-        between the core and the periphery depending on the parameters:
+-   
+
+    -   **Nested** A classic Core-periphery with or without strong
+        connection between the core and the periphery depending on the
+        parameters:
 
 ```{r echo=FALSE}
      knitr::kable(cp)
-``` 
+```
 
 ```{r parameters}
 pi <- c(1/4, 3/4)
 ```
 
-
-```{r analyse_article}
-robust_topology <- tibble::tibble()
-eps <- c(1/seq(8, 1.5, by = -.5), seq(1, 8, by = .5))
-for(i in seq(19)) {
-  rho <- c(i*.05, (20-i)*.05)
-  list_con_mod <- lapply( eps,
-                          function(j) {
-                            list(con = matrix(c(j, 1,
-                                                1, j), 2, 2),
-                                 pi = pi,
-                                 rho = rho)})
-  rob_mod <- purrr::map_dfc(
-    .x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
-    .f = function(x) 
-      unlist(compare_robustness(list_param = list_con_mod, 
-                                dens = dens, 
-                                new_nr = nr, 
-                                new_nc = nc, 
-                                ext_seq = x))) %>%  
-    dplyr::mutate(Topology = "Modular", 
-                  rho = rho[1], 
-                  j = seq_along(eps))
-  list_con_nest <- lapply( eps,
-                           function(j) {
-                             list(con = matrix(c(j, j,
-                                                 j, 1), 2, 2),
-                                  pi = pi,
-                                  rho = rho)})
-  rob_nest <- purrr::map_dfc(.x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
-                             .f = function(x) 
-                               unlist(compare_robustness(list_param = list_con_nest, 
-                                                         dens = dens, 
-                                                         new_nr = nr, 
-                                                         new_nc = nc, 
-                                                         ext_seq = x))) %>%  
-    dplyr::mutate(Topology = "Nested", 
-                  rho = rho[1], 
-                  j = seq_along(eps))
-  robust_topology <- dplyr::bind_rows(robust_topology, rob_mod, rob_nest)
+```{r analyse_topo, echo = FALSE}
+if (! file.exists("res_topo.rds")) {
+  robust_topology <- tibble::tibble()
+  eps <- c(1/seq(8, 1.5, by = -.5), seq(1, 8, by = .5))
+  for(i in seq(19)) {
+    rho <- c(i*.05, (20-i)*.05)
+    list_con_mod <- lapply( eps,
+                            function(j) {
+                              list(con = matrix(c(j, 1,
+                                                  1, j), 2, 2),
+                                   pi = pi,
+                                   rho = rho)})
+    rob_mod <- purrr::map_dfc(
+      .x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
+      .f = function(x) 
+        unlist(compare_robustness(list_param = list_con_mod, 
+                                  dens = dens, 
+                                  new_nr = nr, 
+                                  new_nc = nc, 
+                                  ext_seq = x))) %>%  
+      dplyr::mutate(Topology = "Modular", 
+                    rho = rho[1], 
+                    j = seq_along(eps))
+    list_con_nest <- lapply( eps,
+                             function(j) {
+                               list(con = matrix(c(j, j,
+                                                   j, 1), 2, 2),
+                                    pi = pi,
+                                    rho = rho)})
+    rob_nest <- purrr::map_dfc(.x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
+                               .f = function(x) 
+                                 unlist(compare_robustness(list_param = list_con_nest, 
+                                                           dens = dens, 
+                                                           new_nr = nr, 
+                                                           new_nc = nc, 
+                                                           ext_seq = x))) %>%  
+      dplyr::mutate(Topology = "Core-Periphery", 
+                    rho = rho[1], 
+                    j = seq_along(eps))
+    robust_topology <- dplyr::bind_rows(robust_topology, rob_mod, rob_nest)
+    saveRDS(robust_topology, "res_topo.rds")
+  }
+} else {
+  robust_topology <- readRDS("res_topo.rds")
 }
+
 ```
 
+```{r eval=FALSE}
+  robust_topology <- tibble::tibble()
+  eps <- c(1/seq(8, 1.5, by = -.5), seq(1, 8, by = .5))
+  for(i in seq(19)) {
+    rho <- c(i*.05, (20-i)*.05)
+    list_con_mod <- lapply( eps,
+                            function(j) {
+                              list(con = matrix(c(j, 1,
+                                                  1, j), 2, 2),
+                                   pi = pi,
+                                   rho = rho)})
+    rob_mod <- purrr::map_dfc(
+      .x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
+      .f = function(x) 
+        unlist(compare_robustness(list_param = list_con_mod, 
+                                  dens = dens, 
+                                  new_nr = nr, 
+                                  new_nc = nc, 
+                                  ext_seq = x))) %>%  
+      dplyr::mutate(Topology = "Modular", 
+                    rho = rho[1], 
+                    j = seq_along(eps))
+    list_con_nest <- lapply( eps,
+                             function(j) {
+                               list(con = matrix(c(j, j,
+                                                   j, 1), 2, 2),
+                                    pi = pi,
+                                    rho = rho)})
+    rob_nest <- purrr::map_dfc(.x = purrr::set_names(c("uniform", "increasing", "decreasing")), 
+                               .f = function(x) 
+                                 unlist(compare_robustness(list_param = list_con_nest, 
+                                                           dens = dens, 
+                                                           new_nr = nr, 
+                                                           new_nc = nc, 
+                                                           ext_seq = x))) %>%  
+      dplyr::mutate(Topology = "Core-Periphery", 
+                    rho = rho[1], 
+                    j = seq_along(eps))
+    robust_topology <- dplyr::bind_rows(robust_topology, rob_mod, rob_nest)
+  }
+```
 
+We print a heatmap going from blue (least robust), to white (same
+robustness than a network with no mesoscale structure), to red (more
+robust than a network with no structure).
 
-```{r print_article}
-robust_topology %>%
-  tidyr::pivot_longer(cols = c("uniform", "increasing", "decreasing"), 
+```{r print_topo}
+prt <- robust_topology %>%
+#  rename(Uniform = uniform, Increasing = increasing, Decreasing = decreasing) +
+  tidyr::pivot_longer(cols = c("decreasing","uniform", "increasing"), 
                       names_to = "Extinction", 
                       values_to = "Robustness") %>%
-  ggplot2::ggplot(ggplot2::aes(x = j, y = rho)) +
-  ggplot2::geom_tile(ggplot2::aes(fill = Robustness)) +
-  ggplot2::facet_grid(Topology  ~ Extinction) +
-  ggplot2::scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+  mutate(Extinction = forcats::as_factor(
+    case_when(Extinction == "decreasing" ~ "Decreasing",
+              Extinction == "uniform" ~ "Uniform",
+              Extinction == "increasing" ~ "Increasing"))) %>% 
+  ggplot(ggplot2::aes(x = j, y = rho)) +
+  geom_tile(ggplot2::aes(fill = Robustness)) +
+  facet_grid(Topology  ~ Extinction) +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                                 midpoint = rob_er, 
-                                ggplot2::guide_colorbar(title = "AUC(R)")) +
-  ggplot2::annotate(x = 15, y = .5, geom = "point", col = "black", size = 3) +
-  ggplot2::annotate(x = 15, y = .55, geom = "text", label = "ER",
+                                guide_colorbar(title = "R")) +
+  annotate(x = 15, y = .5, geom = "point", col = "black", size = 3) +
+  annotate(x = 15, y = .55, geom = "text", label = "ER",
                     col = "black", size = 3) +
-  ggplot2::scale_x_continuous(breaks = c(0, 7, 15, 22, 30), 
+  scale_x_continuous(breaks = c(0, 7, 15, 22, 30), 
                               labels = c(1/8, 1/4, 1, 4, 8)) +
-  ggplot2::coord_fixed(ratio = 30) +
-  ggplot2::theme_classic(base_size = 15)
-# ggsave(filename = "robust_topology_heatmap.png",  path = "~/Documents/robustness/robustness/image/", height = 6, width = 9)
+  coord_fixed(ratio = 30) +
+  theme_bw(base_size = 15, base_line_size = 0)
+
+# df_shape <- data.frame(
+#   x = c(1, 1, 29, 29, 1, 14),
+#   y = c(.05, .05, .05, .5, .95, .05),
+#   button = c("a", "d", "b","e", "c", "f"),
+#   Topology = rep(c("Core-Periphery", "Modular"), 3),
+#   Extinction = c(rep("Decreasing", 2), rep("Increasing", 2), rep("Uniform", 2)))
+df_shape <- data.frame(
+  x = c(1  , 29 , 29,   29,  1, 1),
+  y = c(.85, .05, .35, .95, .6, .4),
+  button = c(15L, 17L, 18L, 0L, 2L, 5L),#,
+  Topology = rep(c("Core-Periphery", "Modular"), each = 3))
+#  Extinction = c(rep("Decreasing", 2), rep("Increasing", 2), rep("Uniform", 2)))
+prt + geom_point(data = df_shape, mapping = aes(x = x, y = y, shape = button), 
+                 size = 4, show.legend = FALSE)+
+  scale_shape_identity() 
 ```
 
+```{r save_topo, echo=FALSE}
 
-## Testing the variance of the MC robustness and the LBM robustness from simulated LBM networks
+# ggsave(filename = "robust_topology_heatmap.png",
+#        path = "~/Documents/robustness/robustness/image/",
+#        height = 6, width = 9)
+
+```
+
+<!-- ```{r print_topo} -->
+
+<!-- var_er <- var_auc_unif_lbm(matrix(.0156, 1, 1), 1, 1, 100, 100) -->
+
+<!-- prtpres <- robust_topology %>% -->
+
+<!-- #  rename(Uniform = uniform, Increasing = increasing, Decreasing = decreasing) + -->
+
+<!--   tidyr::pivot_longer(cols = c("uniform", "increasing", "decreasing"),  -->
+
+<!--                       names_to = "Extinction",  -->
+
+<!--                       values_to = "Robustness") %>% -->
+
+<!--   mutate(Extinction = as.factor(case_when(Extinction == "uniform" ~ "Uniform", -->
+
+<!--                                 Extinction == "increasing" ~ "Increasing", -->
+
+<!--                                 Extinction == "decreasing" ~ "Decreasing"))) %>%  -->
+
+<!--   filter(Extinction == "Uniform") %>%  -->
+
+<!--   ggplot(ggplot2::aes(x = j, y = rho)) + -->
+
+<!--   geom_tile(ggplot2::aes(fill = Robustness)) + -->
+
+<!--   facet_wrap(~ Topology) + -->
+
+<!--   scale_fill_gradient2(low = "blue", high = "red",  -->
+
+<!--                                 midpoint = rob_er - sqrt(var_er),  -->
+
+<!--                                 guide_colorbar(title = "R")) + -->
+
+<!--   annotate(x = 15, y = .5, geom = "point", col = "black", size = 4) + -->
+
+<!--   annotate(x = 15, y = .55, geom = "text", label = "ER", -->
+
+<!--                     col = "black", size = 3) + -->
+
+<!--   scale_x_continuous(breaks = c(0, 7, 15, 22, 30),  -->
+
+<!--                               labels = c(1/8, 1/4, 1, 4, 8)) + -->
+
+<!--   coord_fixed(ratio = 30) + -->
+
+<!--   theme_bw(base_size = 15, base_line_size = 0) -->
+
+<!-- # df_shape <- data.frame( -->
+
+<!-- #   x = c(1, 1, 29, 29, 1, 14), -->
+
+<!-- #   y = c(.05, .05, .05, .5, .95, .05), -->
+
+<!-- #   button = c("a", "d", "b","e", "c", "f"), -->
+
+<!-- #   Topology = rep(c("Core-Periphery", "Modular"), 3), -->
+
+<!-- #   Extinction = c(rep("Decreasing", 2), rep("Increasing", 2), rep("Uniform", 2))) -->
+
+<!-- df_shape <- data.frame( -->
+
+<!--   x = c(29, 1, 15), -->
+
+<!--   y = c( .35, .75, .05), -->
+
+<!--   button = c(15L, 17L, 18L))#, -->
+
+<!-- #  Topology = rep(c("Core-Periphery", "Modular"), 3), -->
+
+<!-- #  Extinction = c(rep("Decreasing", 2), rep("Increasing", 2), rep("Uniform", 2))) -->
+
+<!-- prtpres + geom_point(data = df_shape, mapping = aes(x = x, y = y, shape = button),  -->
+
+<!--                  size = 5, show.legend = FALSE)+ -->
+
+<!--   scale_shape_identity()  -->
+
+<!-- ``` -->
+
+<!-- ```{r save_topo, echo=FALSE} -->
+
+<!-- # ggsave(filename = "robust_topology_heatmap_pres.png", -->
+
+<!-- #  path = "~/Dropbox/seminaire/210402_ecostats/", height = 6, width = 9) -->
+
+<!-- ``` -->
+
+## Influence of the mesoscale structure on the variability of the robustness
+
+Finally, we will try to figure out how the variability of the robustness
+depends on the mesoscale structure of the network and which part of it
+comes from the variability in connectance and size of blocks of the
+network by restricting ourselves to networks that has the same block
+proportions and number of connections between blocks as expected.
+
+We restrict ourselves to 3 classic topologies: ER (no mesoscale
+structure), modular (assortative communities) and core-periphery. We
+observe that the variability increase with mesoscale structure
+complexity and that the main part of it is due to the variance in block
+proportions and number of connections between blocks.
 
 ```{r compute_gnp}
 if (! file.exists("res_gnp.rds")) {
-n_iter <- 300
-pi <- c(.1,.9)
-rho <- c(.2,.8)
-con <- matrix(c(.8, .4, .4, .1), 2, 2)
-con <- 0.1*con/as.vector(pi%*%con%*%rho)
-nr <- 100
-nc <- 100
-res <- pbmcapply::pbmclapply(
-  X = seq(500),
-  FUN = function(i) {
-    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
-    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
-    par <- get_lbm_param(G$A)
-    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
-    return(tibble(type = "cp", mc = auc_mc, lbm = auc_lbm ))
-  }, mc.cores = 8
-)
-res_cp <- bind_rows(res)
-
-n_iter <- 300
-pi <- 1
-rho <- 1
-con <- matrix(0.1, 1, 1)
-nr <- 100
-nc <- 100
-res <- pbmcapply::pbmclapply(
-  X = seq(500),
-  FUN = function(i) {
-    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
-    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
-    par <- get_lbm_param(G$A)
-    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
-    return(tibble(type = "er", mc = auc_mc, lbm = auc_lbm ))
-  }, mc.cores = 8
-)
-res_er <- bind_rows(res)
-
-pi  <- c(.2, .8)
-rho <- c(.9, .1)
-con <- matrix(c(.6, .1, .2, .2), 2, 2)
-con <- 0.1*con/as.vector(pi%*%con%*%rho)
-res <- pbmcapply::pbmclapply(
-  X = seq(500),
-  FUN = function(i) {
-    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
-    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
-    par <- get_lbm_param(G$A)
-    auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
-    return(tibble(type = "mod", mc = auc_mc, lbm = auc_lbm ))
-  }, mc.cores = 8
-)
-res_mod <- bind_rows(res)
+  n_iter <- 300
+  pi <- c(.1,.9)
+  rho <- c(.2,.8)
+  con <- matrix(c(.8, .4, .4, .1), 2, 2)
+  con <- 0.1*con/as.vector(pi%*%con%*%rho)
+  nr <- 100
+  nc <- 100
+  res <- pbmcapply::pbmclapply(
+    X = seq(500),
+    FUN = function(i) {
+      G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
+      auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+      par <- get_lbm_param(G$A)
+      auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+      return(tibble(type = "cp", mc = auc_mc, lbm = auc_lbm ))
+    }, mc.cores = 8
+  )
+  res_cp <- bind_rows(res)
+  
+  n_iter <- 300
+  pi <- 1
+  rho <- 1
+  con <- matrix(0.1, 1, 1)
+  nr <- 100
+  nc <- 100
+  res <- pbmcapply::pbmclapply(
+    X = seq(500),
+    FUN = function(i) {
+      G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
+      auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+      par <- get_lbm_param(G$A)
+      auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+      return(tibble(type = "er", mc = auc_mc, lbm = auc_lbm ))
+    }, mc.cores = 8
+  )
+  res_er <- bind_rows(res)
+  
+  pi  <- c(.2, .8)
+  rho <- c(.9, .1)
+  con <- matrix(c(.6, .1, .2, .2), 2, 2)
+  con <- 0.1*con/as.vector(pi%*%con%*%rho)
+  res <- pbmcapply::pbmclapply(
+    X = seq(500),
+    FUN = function(i) {
+      G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
+      auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc
+      par <- get_lbm_param(G$A)
+      auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+      return(tibble(type = "mod", mc = auc_mc, lbm = auc_lbm ))
+    }, mc.cores = 8
+  )
+  res_mod <- bind_rows(res)
   res_gnp <- bind_rows(res_cp, res_mod, res_er)
   saveRDS(res_gnp, "res_gnp.rds")
 } else {
@@ -334,16 +636,6 @@ res_mod <- bind_rows(res)
 }
 ```
 
-```{r}
-res_gnp %>% 
-  pivot_longer(cols = - type, names_to = "Method", values_to = "Robustness") %>% 
-  filter(Method == "mc") %>% 
-  ggplot(aes(x = Robustness, fill = type)) +
-  geom_density(alpha = .2) +
-  ylab(label = "") +
-#  geom_vline(xintercept =  robustness_lbm(con, pi, rho, nr, nc)$auc) +
-  theme_minimal(base_size = 15)
-```
 ```{r compute_gnm}
 if (! file.exists("res_gnm.rds")) {
   n_iter <- 300
@@ -414,151 +706,273 @@ if (! file.exists("res_gnm.rds")) {
 
 ```
 
+```{r compute_fixed_block}
+if (! file.exists("res_block.rds")) {
+  n_iter <- 300
+  nr <- 100
+  nc <- 100
+  
+  pi <- c(.1,.9)
+  rho <- c(.2,.8)
+  con <- matrix(c(.8, .4, .4, .1), 2, 2)
+  con <- 0.1*con/as.vector(pi%*%con%*%rho)
+  simz <- function() {
+    A <- diag(0, 100)
+     for (k in seq_along(pi)) {
+      for (q in seq_along(rho)) {
+        A[Z == k, W == q] <- igraph::as_incidence_matrix(
+          igraph::sample_bipartite(sum(Z == k), sum(W == q),
+                                   type = "gnp", p = con[k,q]))
+      }
+     }
+    return(A)
+  }
+  
+  Z <-  rep(seq(2), times = 100*pi)
+  W <-  rep(seq(2), times = 100*rho)
+  res <- pbmcapply::pbmclapply(
+    X = seq(500),
+    FUN = function(i) {
+      G <- simz()
+      auc_mc <- robustness_emp(G, nb_iter =  n_iter)$auc
+      par <- get_lbm_param(G)
+      auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+      return(tibble(type = "cp", mc = auc_mc, lbm = auc_lbm ))
+    }, mc.cores = 8
+  )
+  res_cp_block <- bind_rows(res)
+  
+  pi <- 1
+  rho <- 1
+  con <- matrix(0.1, 1, 1)
+  Z <-  rep(seq(1), times = 100*pi)
+  W <-  rep(seq(1), times = 100*rho)
+  res <- pbmcapply::pbmclapply(
+    X = seq(500),
+    FUN = function(i) {
+      G <- simz()
+      auc_mc <- robustness_emp(G, nb_iter =  n_iter)$auc
+      par <- get_lbm_param(G)
+      auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+      return(tibble(type = "er", mc = auc_mc, lbm = auc_lbm ))
+    }, mc.cores = 8
+  )
+  res_er_block <- bind_rows(res)
+  
+  pi  <- c(.2, .8)
+  rho <- c(.9, .1)
+  con <- matrix(c(.6, .1, .2, .2), 2, 2)
+  con <- 0.1*con/as.vector(pi%*%con%*%rho)
+  W <-  rep(seq(2), times = 100*rho)
+  Z <-  rep(seq(2), times = 100*pi)
+  res <- pbmcapply::pbmclapply(
+    X = seq(500),
+    FUN = function(i) {
+      G <- simz()
+      auc_mc <- robustness_emp(G, nb_iter =  n_iter)$auc
+      par <- get_lbm_param(G)
+      auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
+      return(tibble(type = "mod", mc = auc_mc, lbm = auc_lbm ))
+    }, mc.cores = 8
+  )
+  res_mod_block <- bind_rows(res)  
+  res_block <- bind_rows(res_cp_block, res_mod_block, res_er_block)
+  saveRDS(res_block, "res_block.rds")
+} else {
+  res_block <- readRDS("res_block.rds")
+}
+
+```
+
+<!-- ```{r} -->
+
+<!-- res_gnm %>%  -->
+
+<!--   mutate(Model = "Microcanonical") %>%  -->
+
+<!--   bind_rows( -->
+
+<!--       res_gnp %>%  -->
+
+<!--       mutate(Model = "Canonical")) %>%  -->
+
+<!--   bind_rows( -->
+
+<!--     res_block %>%  -->
+
+<!--     mutate(Model = "Fixed Blocks")) %>%  -->
+
+<!--   pivot_longer(cols = - c(type, Model), names_to = "Method", values_to = "Robustness") %>%  -->
+
+<!-- #  rename(Topology = type) %>%  -->
+
+<!--   mutate( -->
+
+<!--     Topology = case_when( -->
+
+<!--       type == "cp" ~ "Core-Periphery", -->
+
+<!--       type == "er" ~ "ER", -->
+
+<!--       type == "mod" ~ "Modular" -->
+
+<!--     )) %>%  -->
+
+<!--   filter(Method == "mc") %>%  -->
+
+<!--   ggplot(aes(x = Robustness, fill = Topology, lty = Topology)) + -->
+
+<!--   ggridges::geom_density_ridges(aes(y = Model), alpha = .3) + -->
+
+<!-- #  geom_density(alpha = .2) + -->
+
+<!--   ylab(label = "") + -->
+
+<!-- #  facet_wrap(~ Model) + -->
+
+<!--   theme_minimal(base_size = 15)  -->
+
+<!-- # ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/", -->
+
+<!-- #         width = 8, height = 4) -->
+
+<!-- ``` -->
+
+<!-- ```{r compute_gnp} -->
+
+<!-- if (! file.exists("res_gnp_pres.rds")) { -->
+
+<!--   n_iter <- 300 -->
+
+<!--   pi <- c(.25,.75) -->
+
+<!--   rho <- c(.35,.65) -->
+
+<!--   con <- matrix(c(.8, .8, .8, .1), 2, 2) -->
+
+<!--   con <- 0.0156*con/as.vector(pi%*%con%*%rho) -->
+
+<!--   nr <- 100 -->
+
+<!--   nc <- 100 -->
+
+<!--   res <- pbmcapply::pbmclapply( -->
+
+<!--     X = seq(500), -->
+
+<!--     FUN = function(i) { -->
+
+<!--       G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con) -->
+
+<!--       auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc -->
+
+<!--       par <- get_lbm_param(G$A) -->
+
+<!--       auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc -->
+
+<!--       return(tibble(type = "cp", mc = auc_mc, lbm = auc_lbm )) -->
+
+<!--     }, mc.cores = 8 -->
+
+<!--   ) -->
+
+<!--   res_cp <- bind_rows(res) -->
+
+<!--   n_iter <- 300 -->
+
+<!--   pi <- 1 -->
+
+<!--   rho <- 1 -->
+
+<!--   con <- matrix(0.0156, 1, 1) -->
+
+<!--   nr <- 100 -->
+
+<!--   nc <- 100 -->
+
+<!--   res <- pbmcapply::pbmclapply( -->
+
+<!--     X = seq(500), -->
+
+<!--     FUN = function(i) { -->
+
+<!--       G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con) -->
+
+<!--       auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc -->
+
+<!--       par <- get_lbm_param(G$A) -->
+
+<!--       auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc -->
+
+<!--       return(tibble(type = "er", mc = auc_mc, lbm = auc_lbm )) -->
+
+<!--     }, mc.cores = 8 -->
+
+<!--   ) -->
+
+<!--   res_er <- bind_rows(res) -->
+
+<!--   pi  <- c(.25, .75) -->
+
+<!--   rho <- c(.35, .65) -->
+
+<!--   con <- matrix(c(.8, .1, .1, .8), 2, 2) -->
+
+<!--   con <- 0.0156*con/as.vector(pi%*%con%*%rho) -->
+
+<!--   res <- pbmcapply::pbmclapply( -->
+
+<!--     X = seq(500), -->
+
+<!--     FUN = function(i) { -->
+
+<!--       G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con) -->
+
+<!--       auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc -->
+
+<!--       par <- get_lbm_param(G$A) -->
+
+<!--       auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc -->
+
+<!--       return(tibble(type = "mod", mc = auc_mc, lbm = auc_lbm )) -->
+
+<!--     }, mc.cores = 8 -->
+
+<!--   ) -->
+
+<!--   res_mod <- bind_rows(res) -->
+
+<!--   res_gnp_pres <- bind_rows(res_cp, res_mod, res_er) -->
+
+<!--   saveRDS(res_gnp, "res_gnp_pres.rds") -->
+
+<!-- } else { -->
+
+<!--   res_gnp_pres <- readRDS("res_gnp_pres.rds") -->
+
+<!-- } -->
+
+<!-- ``` -->
 
 ```{r}
-pi <- c(.1,.9)
-rho <- c(.2,.8)
-con <- matrix(c(.8, .4, .4, .1), 2, 2)
-con <- 0.1*con/as.vector(pi%*%con%*%rho)
-var_auc_unif_lbm(con, pi, rho, nr, nc)
-```
-```{r}
-res_gnm %>% 
-  pivot_longer(cols = - type, names_to = "Method", values_to = "Robustness") %>% 
-  filter(Method == "mc") %>% 
-  ggplot(aes(x = Robustness, fill = type)) +
-  geom_density(alpha = .2) #+
- # geom_vline(xintercept =  robustness_lbm(con, pi, rho, nr, nc)$auc)
-```
-```{r}
-res_gnm %>% 
-  mutate(Model = "Microcanonical") %>% 
-  bind_rows(
-      res_gnp %>% 
-      mutate(Model = "Canonical")) %>% 
+res_gnp %>% 
+  mutate(Model = "Canonical") %>%  
   pivot_longer(cols = - c(type, Model), names_to = "Method", values_to = "Robustness") %>% 
 #  rename(Topology = type) %>% 
   mutate(
     Topology = case_when(
-      type == "cp" ~ "Nested",
+      type == "cp" ~ "Core-Periphery",
       type == "er" ~ "ER",
       type == "mod" ~ "Modular"
     )) %>% 
   filter(Method == "mc") %>% 
   ggplot(aes(x = Robustness, fill = Topology, lty = Topology)) +
-  geom_density(alpha = .2) +
-  ylab(label = "") +
-  facet_wrap(~ Model) +
-  theme_bw(base_size = 15)
-# ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/",
-       # width = 8, height = 4.5)
-```
-
-```{r}
-n_iter <- 300
-con <- matrix(c(.99, .3, .01, .4), 2, 2)
-pi <- rho <- c(.5, .5)
-#con <- 0.1*con/as.vector(pi%*%con%*%rho)
-nr <- nc <- 50
-res <- pbmcapply::pbmclapply(
-  X = seq(100),
-  FUN = function(i) {
-    G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con)
-    unif_mc <- robustness_emp(G$A, nb_iter =  n_iter, ext_seq = "uniform")$auc
-    dec_mc <- robustness_emp(G$A, nb_iter =  n_iter, ext_seq = "decreasing")$auc
-    inc_mc <- robustness_emp(G$A, nb_iter =  n_iter, ext_seq = "increasing")$auc
-    par <- get_lbm_param(G$A)
-    unif_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc
-    dec_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc, ext_seq = "decreasing")$auc
-    inc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc, ext_seq = "increasing")$auc
-    return(tibble(type = "strange", unif_mc = unif_mc, dec_mc = dec_mc, inc_mc = inc_mc,
-                  unif_lbm = unif_lbm, dec_lbm = dec_lbm, inc_lbm = inc_lbm))
-  }, mc.cores = 8
-)
-res_strange <- bind_rows(res)
-```
-
-```{r}
-robustness_lbm(con, pi, rho, nr, nc)$auc
-robustness_lbm(con, pi, rho, nr, nc, ext_seq = "increasing")$auc
-robustness_lbm(con, pi, rho, nr, nc, ext_seq = "decreasing")$auc
-```
-```{r}
-con <- matrix(c(.5, .2, .01, .3), 2, 2)
-pi <- c(.2, .8)
-rho <- c(.5, .5)
-robustness_lbm(con, pi, rho, nr, nc)$auc
-robustness_lbm(con, pi, rho, nr, nc, ext_seq = "increasing")$auc
-robustness_lbm(con, pi, rho, nr, nc, ext_seq = "decreasing")$auc
-```
-
-
-```{r}
-skimr::skim(res_strange)
-res_strange %>% 
-  pivot_longer(cols = where(is.numeric), names_to = "Method", values_to = "Robustness") %>% 
-  filter(Method %in% c("inc_mc", "inc_lbm")) %>% 
-  # mutate(
-  #   Extinction = case_when(
-  #     Method == "unif" ~ "Uniform",
-  #     Method == "inc" ~ "Increasing",
-  #     Method == "dec" ~ "Decreasing"
-  #   )) %>% 
-  ggplot(aes(x = Robustness, fill = Method, linetype = Method)) +
   geom_density(alpha = .3) +
+#  ggridges::geom_density_ridges(aes(y = Model), alpha = .3) +
+#  geom_density(alpha = .2) +
   ylab(label = "") +
 #  facet_wrap(~ Model) +
-  theme_bw(base_size = 15)
+  theme_minimal(base_size = 15) 
+ # ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/",
+ #         width = 8, height = 4)
 ```
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-bind_rows(res_cp_gnm, res_mod_gnm, res_er_gnm) %>% 
-  mutate(Model = "Microcanonical") %>% 
-  bind_rows(
-    bind_rows(res_cp, res_mod, res_er) %>% 
-      mutate(Model = "Canonical")) %>% 
-  pivot_longer(cols = - c(type, Model), names_to = "Method", values_to = "Robustness") %>% 
-  group_by(type, Model, Method) %>% 
-  summarise(mean(Robustness))
-```
-
-<!-- Normalite asymptotique : -->
-<!-- ```{r} -->
-<!-- #n_iter <- 300 -->
-<!-- pi <- c(.2,.8) -->
-<!-- rho <- c(.2,.8) -->
-<!-- con <- matrix(c(.8, .4, .4, .1), 2, 2) -->
-<!-- con <- 0.03*con/as.vector(pi%*%con%*%rho) -->
-<!-- nr <- 800 -->
-<!-- nc <- 250 -->
-<!-- res <- pbmcapply::pbmclapply( -->
-<!--   X = seq(1000), -->
-<!--   FUN = function(i) { -->
-<!--     G <- simulate_lbm(nr = nr, nc = nc, pi = pi, rho = rho, con = con) -->
-<!-- #    auc_mc <- robustness_emp(G$A, nb_iter =  n_iter)$auc -->
-<!--     par <- get_lbm_param(G$A) -->
-<!--     auc_lbm <- robustness_lbm(par$con, par$pi, par$rho, nr, nc)$auc -->
-<!--     auc_dec <- robustness_lbm(par$con, par$pi, par$rho, nr, nc, ext_seq = "decreasing")$auc -->
-<!--     return(tibble(type = "cp", dec = auc_dec, lbm = auc_lbm )) -->
-<!--   }, mc.cores = 8 -->
-<!-- ) -->
-<!-- res_an <- bind_rows(res) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- bind_rows(res_an) %>%  -->
-<!--   pivot_longer(cols = - type, names_to = "Method", values_to = "Robustness") %>%  -->
-<!-- #  filter(Method == "mc") %>%  -->
-<!--   ggplot(aes(x = Robustness, fill = Method)) + -->
-<!--   geom_density(alpha = .2) #+ -->
-<!-- ``` -->
