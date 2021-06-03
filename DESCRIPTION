@@ -34,7 +34,8 @@ Suggests:
     pbmcapply,
     tidyverse,
     ggridges,
-    pammtools
+    pammtools,
+    markdown
 Language: en-US
 LinkingTo: 
     Rcpp
