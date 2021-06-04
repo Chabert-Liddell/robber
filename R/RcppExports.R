@@ -5,11 +5,6 @@ nChoosek <- function(n, k) {
     .Call(`_robber_nChoosek`, n, k)
 }
 
-#' @title Compute the Conditional Variance of the Robustness
-#'
-#' @description Compute Var_A(E_S[AUC | A])
-#' @inheritParams auc_robustness_lbm
-#' @export
 var_auc_unif_lbm_cpp <- function(con, pi, rho, nr, nc) {
     .Call(`_robber_var_auc_unif_lbm_cpp`, con, pi, rho, nr, nc)
 }

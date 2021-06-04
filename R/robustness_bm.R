@@ -35,7 +35,6 @@
 #' * \code{$block} a vector of size \code{length(pi)}, the block ordering for
 #'   primary extinctions sequence by blocks. \code{NULL} if \code{ext_seq = "uniform"}.
 #' * \code{$model}, \code{$method}, \code{$ext_seq}, \code{$param}.
-
 #' @export
 #'
 #' @examples
@@ -152,6 +151,7 @@ robustness_lbm <- function(con = NULL, pi = NULL, rho = NULL,
 #' the case where \code{ext_seq = "uniform"}, when just the AUC statistic is
 #' needed and the robustness function is not needed. This is particularly
 #' useful if \code{nr} gets large.
+#'
 #' @param con A matrix, the connectivity parameter
 #' @param pi A vector of length \code{nrow(con)}, the proportion of row blocks
 #' @param rho A vector of length \code{ncol(con)}, the proportion of

@@ -27,11 +27,6 @@ unsigned nChoosek( unsigned n, unsigned k )
 }
 
 
-//' @title Compute the Conditional Variance of the Robustness
-//'
-//' @description Compute Var_A(E_S[AUC | A])
-//' @inheritParams auc_robustness_lbm
-//' @export
 // [[Rcpp::export]]
 double var_auc_unif_lbm_cpp(NumericMatrix con, NumericVector pi,
                             NumericVector rho, int nr, int nc) {

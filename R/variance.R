@@ -106,7 +106,7 @@ var_fun_unif_lbm <- function(con, pi, rho, nr, nc) {
     FUN = function(nr, mp, l) { # return l times mp matrix
       choose(mp, mp+mp-l) * choose(nr-mp, l-mp)/choose(nr, mp)
     }, nr = nr))
-  for (m in seq(0, nr)) {
+  for (m in seq(1, nr)) {
     # l_mp <- outer(X = seq.int(0,nr), Y = seq.int(0,nr), `-`)
     # l_mp[l_mp<0] <- 0
     for (q in seq(Q)) {
@@ -120,5 +120,6 @@ var_fun_unif_lbm <- function(con, pi, rho, nr, nc) {
       }
     }
   }
+  result[1] <- 0
   return (rev(result))
 }

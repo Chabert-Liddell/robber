@@ -1,0 +1,48 @@
+pandoc: 2.11.2
+pkgdown: 1.6.1
+templates:
+  params:
+    bootswatch: readable
+
+navbar:
+  title: "robber"
+  type: inverse
+  left:
+    - icon: fa-home
+    - text: "Home"
+      href: index.html
+    - text: "Reference"
+      href: "reference/index.html"
+    - text: "Articles"
+      href: "articles/index.html"
+      menu:
+      -  text: Topological Analysis
+         href: "articles/topological-analysis.html"
+    - text: "Changelog"
+      href: "news/index.html"
+  right:
+    - icon: fa-github
+      href: https://github.com/Chabert-Liddell
+articles:
+  topological-analysis: topological-analysis.html
+reference:
+- title: "Robustness functions"
+  contents:
+  - '`auc_robustness_lbm`'
+  - '`compare_robustness`'
+  - '`robustness_emp`'
+  - '`robustness_lbm`'
+  - '`var_auc_unif_lbm`'
+  - '`var_fun_unif_lbm`'
+- title: "Network functions"
+  contents:
+  - '`get_lbm_param`'
+  - '`simulate_lbm`'
+- title: "Data"
+  contents:
+  - hostparasite
+  - pollination
+  - seeddispersal
+- title: "Methods"
+- contents:
+  - '`plot.robber`'

@@ -972,7 +972,11 @@ res_gnp %>%
 #  geom_density(alpha = .2) +
   ylab(label = "") +
 #  facet_wrap(~ Model) +
-  theme_minimal(base_size = 15) 
- # ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/",
- #         width = 8, height = 4)
+  theme_minimal(base_size = 15)
 ```
+
+
+<!-- ```{r} -->
+<!-- # ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/", -->
+<!--  #         width = 8, height = 4) -->
+<!-- ``` -->

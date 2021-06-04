@@ -5,4 +5,4 @@
 ^\.github$
 ^codecov\.yml$
 ^data-raw$
-^vignettes/plot_article\.Rmd$
+^vignettes/_plot_article\.Rmd$
