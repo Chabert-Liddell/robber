@@ -20,7 +20,7 @@
 </head>
 <body data-spy="scroll" data-target="#toc">
     <div class="container template-article">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <header><div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
@@ -38,10 +38,13 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+  <a>
+    <span class="fas fa-home"></span>
      
   </a>
+</li>
+<li>
+  <a href="../index.html">Home</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -54,9 +57,6 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/plot_article.html">plot_article</a>
-    </li>
-    <li>
       <a href="../articles/topological-analysis.html">Topological Analysis</a>
     </li>
   </ul>
@@ -67,8 +67,8 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/Chabert-Liddell/robber/">
-    <span class="fab fa-github fa-lg"></span>
+  <a href="https://github.com/Chabert-Liddell">
+    <span class="fas fa-github"></span>
      
   </a>
 </li>
@@ -139,20 +139,20 @@
 <span class="co">#&gt; [1] 1</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $fun</span>
-<span class="co">#&gt;  [1] 1.0000000 0.9929487 0.9852564 0.9770513 0.9675641 0.9571795 0.9478205</span>
-<span class="co">#&gt;  [8] 0.9357692 0.9233333 0.9126923 0.9008974 0.8870513 0.8743590 0.8546154</span>
-<span class="co">#&gt; [15] 0.8394872 0.8191026 0.7974359 0.7733333 0.7476923 0.7124359 0.6826923</span>
-<span class="co">#&gt; [22] 0.6488462 0.6028205 0.5508974 0.4825641 0.4041026 0.2730769 0.0000000</span>
+<span class="co">#&gt;  [1] 1.0000000 0.9925641 0.9816667 0.9724359 0.9633333 0.9550000 0.9442308</span>
+<span class="co">#&gt;  [8] 0.9339744 0.9225641 0.9108974 0.8983333 0.8851282 0.8701282 0.8530769</span>
+<span class="co">#&gt; [15] 0.8362821 0.8173077 0.7952564 0.7737179 0.7460256 0.7144872 0.6802564</span>
+<span class="co">#&gt; [22] 0.6432051 0.5998718 0.5475641 0.4811538 0.3937179 0.2698718 0.0000000</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $sd</span>
-<span class="co">#&gt;  [1] 0.00000000 0.01819526 0.02505823 0.02985826 0.03443243 0.03942369</span>
-<span class="co">#&gt;  [7] 0.04189916 0.04505652 0.04953658 0.05268935 0.05472096 0.05900851</span>
-<span class="co">#&gt; [13] 0.06126558 0.06648650 0.07030252 0.07459152 0.07978552 0.08454012</span>
-<span class="co">#&gt; [19] 0.09309968 0.09904545 0.10635378 0.11587517 0.11949183 0.12710862</span>
-<span class="co">#&gt; [25] 0.13823458 0.15240817 0.15811232 0.00000000</span>
+<span class="co">#&gt;  [1] 0.00000000 0.01817757 0.02749824 0.03350613 0.03809620 0.04175090</span>
+<span class="co">#&gt;  [7] 0.04472147 0.04918226 0.05216165 0.05370247 0.05586625 0.05547121</span>
+<span class="co">#&gt; [13] 0.06019717 0.06584344 0.07122019 0.07864833 0.08122876 0.08932994</span>
+<span class="co">#&gt; [19] 0.09582002 0.10009882 0.10213690 0.10672033 0.11656197 0.12785685</span>
+<span class="co">#&gt; [25] 0.13945719 0.14727739 0.15405370 0.00000000</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $auc</span>
-<span class="co">#&gt; [1] 0.7944824</span>
+<span class="co">#&gt; [1] 0.7919278</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; attr(,"class")</span>
 <span class="co">#&gt; [1] "robber"</span>
@@ -223,19 +223,18 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $sd</span>
-<span class="co">#&gt;  [1] 3.373627e-02 3.433957e-02 3.513052e-02 3.610450e-02 3.725673e-02</span>
-<span class="co">#&gt;  [6] 3.858187e-02 4.007362e-02 4.172432e-02 4.352444e-02 4.546207e-02</span>
-<span class="co">#&gt; [11] 4.752240e-02 4.968705e-02 5.193346e-02 5.423434e-02 5.655715e-02</span>
-<span class="co">#&gt; [16] 5.886404e-02 6.111231e-02 6.325621e-02 6.525096e-02 6.706045e-02</span>
-<span class="co">#&gt; [21] 6.866987e-02 7.010104e-02 7.141118e-02 7.260006e-02 7.319109e-02</span>
-<span class="co">#&gt; [26] 7.082149e-02 5.674207e-02 8.330002e-09</span>
+<span class="co">#&gt;  [1] 0.03373627 0.03433957 0.03513052 0.03610450 0.03725673 0.03858187</span>
+<span class="co">#&gt;  [7] 0.04007362 0.04172432 0.04352444 0.04546207 0.04752240 0.04968705</span>
+<span class="co">#&gt; [13] 0.05193346 0.05423434 0.05655715 0.05886404 0.06111231 0.06325621</span>
+<span class="co">#&gt; [19] 0.06525096 0.06706045 0.06866987 0.07010104 0.07141118 0.07260006</span>
+<span class="co">#&gt; [25] 0.07319109 0.07082149 0.05674207 0.00000000</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; attr(,"class")</span>
 <span class="co">#&gt; [1] "robber"</span></code></pre></div>
 <p>As we can see the two robustness statistics are very close:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rob_emp_unif</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.7944824</span>
+<span class="co">#&gt; [1] 0.7919278</span>
 <span class="va">rob_lbm_unif</span><span class="op">$</span><span class="va">auc</span>
 <span class="co">#&gt; [1] 0.808319</span></code></pre></div>
 <p>And we can plot the two curves (the empirical one in blue and the LBM one in black):</p>
@@ -274,9 +273,9 @@
 <code class="sourceCode R"><span class="va">rob_emp_dec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"decreasing"</span><span class="op">)</span>
 <span class="va">rob_emp_inc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"increasing"</span><span class="op">)</span>
 <span class="va">rob_emp_dec</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.5794349</span>
+<span class="co">#&gt; [1] 0.5797768</span>
 <span class="va">rob_emp_inc</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.8916097</span></code></pre></div>
+<span class="co">#&gt; [1] 0.8920845</span></code></pre></div>
 <p>The above method is very sensitive to the network sampling, in particular for increasing connection. One way to counter that is to consider that the order of extinction is a function of the degree, for example it might depends linearly on it.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rob_emp_dec_lin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"decreasing"</span>, 
@@ -284,9 +283,9 @@
 <span class="va">rob_emp_inc_lin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"increasing"</span>, 
                                   method <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span>
 <span class="va">rob_emp_dec_lin</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.6993542</span>
+<span class="co">#&gt; [1] 0.7012678</span>
 <span class="va">rob_emp_inc_lin</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.8440171</span></code></pre></div>
+<span class="co">#&gt; [1] 0.8443352</span></code></pre></div>
 <p>As we can see the obtained robustness values are less extreme and closer to the one of a uniform primary extinctions distribution.</p>
 <p>Using the LBM, we can compute a robustness where the extinction distribution is dependent of the block memberships of the primary species. For example, by ordering blocks by their connection probabilities, and extinguishing species base on this order, we obtain:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -915,11 +914,12 @@
 <span class="co">#  geom_density(alpha = .2) +</span>
   <span class="fu">ylab</span><span class="op">(</span>label <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span>
 <span class="co">#  facet_wrap(~ Model) +</span>
-  <span class="fu">theme_minimal</span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">15</span><span class="op">)</span> </code></pre></div>
+  <span class="fu">theme_minimal</span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></code></pre></div>
 <p><img src="topological-analysis_files/figure-html/unnamed-chunk-26-1.png" width="576"></p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"> <span class="co"># ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/",</span>
- <span class="co">#         width = 8, height = 4)</span></code></pre></div>
+<!-- ```{r} -->
+<!-- # ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/", -->
+<!--  #         width = 8, height = 4) -->
+<!-- ``` -->
 </div>
 </div>
   </div>
