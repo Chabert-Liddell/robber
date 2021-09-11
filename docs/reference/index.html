@@ -60,7 +60,7 @@
   <body data-spy="scroll" data-target="#toc">
     <div class="container template-reference-index">
       <header>
-      <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
@@ -71,17 +71,20 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">robber</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+  <a>
+    <span class="fa fa-home"></span>
      
   </a>
+</li>
+<li>
+  <a href="../index.html">Home</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -94,9 +97,6 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/plot_article.html">Plotting Robustness Curve</a>
-    </li>
-    <li>
       <a href="../articles/topological-analysis.html">Topological Analysis</a>
     </li>
   </ul>
@@ -107,8 +107,8 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/Chabert-Liddell/robber/">
-    <span class="fab fa-github fa-lg"></span>
+  <a href="https://github.com/Chabert-Liddell">
+    <span class="fa fa-github"></span>
      
   </a>
 </li>
@@ -139,7 +139,7 @@
     <tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
+          <h2 id="section-robustness-functions" class="hasAnchor"><a href="#section-robustness-functions" class="anchor"></a>Robustness functions</h2>
           <p class="section-desc"></p>
         </th>
       </tr>
@@ -163,30 +163,6 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="get_lbm_param.html">get_lbm_param()</a></code> </p>
-        </td>
-        <td><p>Estimate the parameters of a LBM</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="hostparasite.html">hostparasite</a></code> </p>
-        </td>
-        <td><p>A binarized host-parasite network</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plot.robber.html">plot(<i>&lt;robber&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Plot function pour robber class</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="pollination.html">pollination</a></code> </p>
-        </td>
-        <td><p>A plant-pollinator network</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="robustness_emp.html">robustness_emp()</a></code> </p>
         </td>
         <td><p>Empirical Robustness of a Network</p></td>
@@ -199,18 +175,6 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="seeddispersal.html">seeddispersal</a></code> </p>
-        </td>
-        <td><p>A seed-dispersal network</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="simulate_lbm.html">simulate_lbm()</a></code> </p>
-        </td>
-        <td><p>Simulate a bipartite interaction network using block model</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="var_auc_unif_lbm.html">var_auc_unif_lbm()</a></code> </p>
         </td>
         <td><p>Compute the Conditional variance of the AUC of the LBM Robustness</p></td>
@@ -220,6 +184,81 @@
           <p><code><a href="var_fun_unif_lbm.html">var_fun_unif_lbm()</a></code> </p>
         </td>
         <td><p>Compute the Conditional variance of the LBM Robustness term by term</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-network-functions" class="hasAnchor"><a href="#section-network-functions" class="anchor"></a>Network functions</h2>
+          <p class="section-desc"></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="get_lbm_param.html">get_lbm_param()</a></code> </p>
+        </td>
+        <td><p>Estimate the parameters of a LBM</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="simulate_lbm.html">simulate_lbm()</a></code> </p>
+        </td>
+        <td><p>Simulate a bipartite interaction network using block model</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-data" class="hasAnchor"><a href="#section-data" class="anchor"></a>Data</h2>
+          <p class="section-desc"></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="hostparasite.html">hostparasite</a></code> </p>
+        </td>
+        <td><p>A binarized host-parasite network</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="pollination.html">pollination</a></code> </p>
+        </td>
+        <td><p>A plant-pollinator network</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="seeddispersal.html">seeddispersal</a></code> </p>
+        </td>
+        <td><p>A seed-dispersal network</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-methods" class="hasAnchor"><a href="#section-methods" class="anchor"></a>Methods</h2>
+          <p class="section-desc"></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="plot.robber.html">plot(<i>&lt;robber&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Plot function pour robber class</p></td>
       </tr>
     </tbody>
     </table>
