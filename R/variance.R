@@ -120,5 +120,5 @@ var_fun_unif_lbm <- function(con, pi, rho, nr, nc) {
       }
     }
   }
-  return (rev(result))
+  return (rev(pmax(0,result)))
 }

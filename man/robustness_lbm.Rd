@@ -61,7 +61,7 @@ is exceeded the robustness is computed by a Monte Carlo approximation with
 \item{net}{A network, if given, the function will fit a LBM to obtain the
 parameters of the network and then compute the robustness.}
 
-\item{...}{Option to be passed to get_lbm_param function.}
+\item{...}{Option to be passed to get_\code{lbm_param} function.}
 }
 \value{
 A list and a robber type object:

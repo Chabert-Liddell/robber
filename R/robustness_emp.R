@@ -17,7 +17,7 @@
 #'  * \code{"linear"} (default) set an extinction
 #' probability for each row species that is linear in its degree. It is a
 #' shortcut for \code{method = "power"} and \code{power = 1}.
-#'  * \code{"ordered"} strictly follow the degree order, ie. the most
+#'  * \code{"ordered"} strictly follow the degree order, i.e. the most
 #'   connected species will always goes last for \code{ext_seq = "increasing"}
 #'   or first for \code{ext_seq = "decreasing"}.
 #' @param power An integer (default to 1). Only used when
@@ -183,7 +183,8 @@ robustness_emp <- function(A, ext_seq = "uniform",
 #' @param x An object of class robber
 #' @param type Type of the plot, just function
 #' @param add Whether it should be added to a previous ggplot
-#' @param ... lty, col, ... to be passed to \code{geom_step()} in \code{ggplot2}
+#' @param ... \code{lty}, \code{col}, ... to be passed to \code{geom_step()} in
+#' \code{ggplot2}
 #'
 #' @return A \code{ggplot2} object
 #' @export

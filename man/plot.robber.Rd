@@ -13,7 +13,8 @@
 
 \item{add}{Whether it should be added to a previous ggplot}
 
-\item{...}{lty, col, ... to be passed to \code{geom_step()} in \code{ggplot2}}
+\item{...}{\code{lty}, \code{col}, ... to be passed to \code{geom_step()} in
+\code{ggplot2}}
 }
 \value{
 A \code{ggplot2} object

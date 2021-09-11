@@ -15,7 +15,7 @@ ROBustness using Blockmodel for Ecological network R package
 
 ## Installation
 
-You can install the developpement version of robber
+You can install the development version of robber
 [GitHub](https://github.com/) with:
 
 ``` r

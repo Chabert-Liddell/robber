@@ -55,7 +55,7 @@ print(paste0("Pollination: ", nrow(pollination), " ",
            ncol(pollination), " ", mean(pollination)), sep = ",")
 ```
 
-## Analyzing the robustnes of a host-parasite network
+## Analyzing the robustness of a host-parasite network
 
 To compute the empirical robustness, we can use the function
 `robustness_emp()` which uses a Monte Carlo simulation. Several options
@@ -465,13 +465,6 @@ prt + geom_point(data = df_shape, mapping = aes(x = x, y = y, shape = button),
   scale_shape_identity() 
 ```
 
-```{r save_topo, echo=FALSE}
-
-# ggsave(filename = "robust_topology_heatmap.png",
-#        path = "~/Documents/robustness/robustness/image/",
-#        height = 6, width = 9)
-
-```
 
 <!-- ```{r print_topo} -->
 
@@ -553,13 +546,7 @@ prt + geom_point(data = df_shape, mapping = aes(x = x, y = y, shape = button),
 
 <!-- ``` -->
 
-<!-- ```{r save_topo, echo=FALSE} -->
 
-<!-- # ggsave(filename = "robust_topology_heatmap_pres.png", -->
-
-<!-- #  path = "~/Dropbox/seminaire/210402_ecostats/", height = 6, width = 9) -->
-
-<!-- ``` -->
 
 ## Influence of the mesoscale structure on the variability of the robustness
 
@@ -832,10 +819,6 @@ if (! file.exists("res_block.rds")) {
 
 <!--   theme_minimal(base_size = 15)  -->
 
-<!-- # ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/", -->
-
-<!-- #         width = 8, height = 4) -->
-
 <!-- ``` -->
 
 <!-- ```{r compute_gnp} -->
@@ -973,6 +956,4 @@ res_gnp %>%
   ylab(label = "") +
 #  facet_wrap(~ Model) +
   theme_minimal(base_size = 15) 
- # ggsave(filename = "variance_density.png", path = "~/Documents/robustness/robustness/image/",
- #         width = 8, height = 4)
 ```

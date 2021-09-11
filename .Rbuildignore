@@ -6,3 +6,7 @@
 ^codecov\.yml$
 ^data-raw$
 ^vignettes/plot_article\.Rmd$
+^docs$
+^_pkgdown\.yml$
+^dev$
+^cran-comments\.md$

@@ -34,7 +34,7 @@ available.}
 \item \code{"linear"} (default) set an extinction
 probability for each row species that is linear in its degree. It is a
 shortcut for \code{method = "power"} and \code{power = 1}.
-\item \code{"ordered"} strictly follow the degree order, ie. the most
+\item \code{"ordered"} strictly follow the degree order, i.e. the most
 connected species will always goes last for \code{ext_seq = "increasing"}
 or first for \code{ext_seq = "decreasing"}.
 }}

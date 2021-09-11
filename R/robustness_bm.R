@@ -28,7 +28,7 @@
 #' \code{approx_threshold} number of samples.
 #' @param net A network, if given, the function will fit a LBM to obtain the
 #' parameters of the network and then compute the robustness.
-#' @param ... Option to be passed to get_lbm_param function.
+#' @param ... Option to be passed to get_\code{lbm_param} function.
 #' @return A list and a robber type object:
 #' * \code{$fun} the robustness function, a vector of size \code{nr +1}
 #' * \code{$auc} the area under the curve of the robustness function

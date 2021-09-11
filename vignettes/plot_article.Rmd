@@ -1,5 +1,5 @@
 ---
-title: "plot_article"
+title: "Plotting Robustness Curve"
 author: "Saint-Clair Chabert-Liddell"
 output: rmarkdown::html_vignette
 vignette: >
@@ -12,7 +12,9 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,
+                        warning = FALSE,
+  message = FALSE)
 ```
 
 ```{r}
@@ -128,6 +130,3 @@ plot(rob_lbm_inc, size = 1.5) +
     ggtitle("Increasing") 
 ```
 
-# ```{r}
-# ggsave(filename = "~/Documents/robustness/robustness/image/rob_function_3.png", width = 10, height = 3.5)
-# ```
