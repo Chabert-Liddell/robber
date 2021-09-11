@@ -2,7 +2,7 @@
 title: "Topological Analysis"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Topological Analysis}
+  %\VignetteIndexEntry{topological-analysis}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
