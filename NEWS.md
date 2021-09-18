@@ -1,3 +1,6 @@
+# robber 0.2.2
+* Changed some examples to deal with real data instead of simulated data
+
 # robber 0.2.1
 * Minor changes for cran submission
 

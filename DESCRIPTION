@@ -1,6 +1,6 @@
 Package: robber
 Title: Using Block Model to Estimate the Robustness of Ecological Network
-Version: 0.2.1
+Version: 0.2.2
 Authors@R: 
     person(given = "Saint-Clair",
            family = "Chabert-Liddell",
@@ -8,13 +8,12 @@ Authors@R:
            email = "saint-clair.chabert-liddell@agroparistech.fr",
            comment = c(ORCID = "0000-0001-5604-7308"))
 Description: Implementation of a variety of methods to compute
-    the robustness of ecological interaction networks with binary interactions. 
-    In particular, using the Stochastic Block Model and its bipartite
-    counterpart, the Latent Block Model to put a parametric model on the
-    network, allows the comparison of the robustness of networks differing
-    in richness and connectance. It also deals with networks that are
-    partially sampled and/or with missing values. The methodology is described
-    in the following preprint: <arXiv:1910.10512>.
+    the robustness of ecological interaction networks with binary interactions 
+    as described in <arXiv:1910.10512>. In particular, using the Stochastic 
+    Block Model and its bipartite counterpart, the Latent Block Model to put a 
+    parametric model on the network, allows the comparison of the robustness of 
+    networks differing in species richness and number of interactions. It also
+    deals with networks that are partially sampled and/or with missing values. 
 License: GPL-3
 URL: https://github.com/Chabert-Liddell/robber
 BugReports: https://github.com/Chabert-Liddell/robber/issues
