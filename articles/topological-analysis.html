@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">robber</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.2</span>
       </span>
     </div>
 
@@ -139,20 +139,20 @@
 <span class="co">#&gt; [1] 1</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $fun</span>
-<span class="co">#&gt;  [1] 1.0000000 0.9901282 0.9816667 0.9728205 0.9623077 0.9534615 0.9415385</span>
-<span class="co">#&gt;  [8] 0.9305128 0.9210256 0.9080769 0.8944872 0.8824359 0.8679487 0.8528205</span>
-<span class="co">#&gt; [15] 0.8382051 0.8210256 0.8025641 0.7787179 0.7512821 0.7224359 0.6906410</span>
-<span class="co">#&gt; [22] 0.6528205 0.6039744 0.5560256 0.4951282 0.4110256 0.2788462 0.0000000</span>
+<span class="co">#&gt;  [1] 1.0000000 0.9905128 0.9815385 0.9723077 0.9632051 0.9535897 0.9434615</span>
+<span class="co">#&gt;  [8] 0.9324359 0.9207692 0.9089744 0.8952564 0.8820513 0.8687179 0.8537179</span>
+<span class="co">#&gt; [15] 0.8403846 0.8235897 0.8002564 0.7753846 0.7498718 0.7174359 0.6828205</span>
+<span class="co">#&gt; [22] 0.6496154 0.6110256 0.5660256 0.4942308 0.4151282 0.2711538 0.0000000</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $sd</span>
-<span class="co">#&gt;  [1] 0.00000000 0.02101177 0.02676889 0.02969126 0.03487809 0.03812368</span>
-<span class="co">#&gt;  [7] 0.04225445 0.04669875 0.04989286 0.05288804 0.05490148 0.05918599</span>
-<span class="co">#&gt; [13] 0.06297787 0.06902417 0.07066052 0.07363525 0.08126012 0.08682553</span>
-<span class="co">#&gt; [19] 0.09140354 0.09687577 0.10433872 0.11371719 0.12309374 0.13298261</span>
-<span class="co">#&gt; [25] 0.14306837 0.16046581 0.16760938 0.00000000</span>
+<span class="co">#&gt;  [1] 0.00000000 0.02011065 0.02658746 0.03196171 0.03534006 0.03834473</span>
+<span class="co">#&gt;  [7] 0.04236262 0.04608286 0.04733712 0.04851124 0.05072336 0.05460465</span>
+<span class="co">#&gt; [13] 0.06151058 0.06421211 0.06599242 0.07196343 0.07954083 0.08649936</span>
+<span class="co">#&gt; [19] 0.09195210 0.09654402 0.10322583 0.11327219 0.11540920 0.12529115</span>
+<span class="co">#&gt; [25] 0.14025808 0.15405804 0.16036871 0.00000000</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $auc</span>
-<span class="co">#&gt; [1] 0.794886</span>
+<span class="co">#&gt; [1] 0.794943</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; attr(,"class")</span>
 <span class="co">#&gt; [1] "robber"</span>
@@ -234,7 +234,7 @@
 <p>As we can see the two robustness statistics are very close:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rob_emp_unif</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.794886</span>
+<span class="co">#&gt; [1] 0.794943</span>
 <span class="va">rob_lbm_unif</span><span class="op">$</span><span class="va">auc</span>
 <span class="co">#&gt; [1] 0.808319</span></code></pre></div>
 <p>And we can plot the two curves (the empirical one in blue and the LBM one in black):</p>
@@ -273,9 +273,9 @@
 <code class="sourceCode R"><span class="va">rob_emp_dec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"decreasing"</span><span class="op">)</span>
 <span class="va">rob_emp_inc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"increasing"</span><span class="op">)</span>
 <span class="va">rob_emp_dec</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.5795299</span>
+<span class="co">#&gt; [1] 0.5794302</span>
 <span class="va">rob_emp_inc</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.8918661</span></code></pre></div>
+<span class="co">#&gt; [1] 0.891453</span></code></pre></div>
 <p>The above method is very sensitive to the network sampling, in particular for increasing connection. One way to counter that is to consider that the order of extinction is a function of the degree, for example it might depends linearly on it.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rob_emp_dec_lin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"decreasing"</span>, 
@@ -283,9 +283,9 @@
 <span class="va">rob_emp_inc_lin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"increasing"</span>, 
                                   method <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span>
 <span class="va">rob_emp_dec_lin</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.6994729</span>
+<span class="co">#&gt; [1] 0.699981</span>
 <span class="va">rob_emp_inc_lin</span><span class="op">$</span><span class="va">auc</span>
-<span class="co">#&gt; [1] 0.8454748</span></code></pre></div>
+<span class="co">#&gt; [1] 0.8497341</span></code></pre></div>
 <p>As we can see the obtained robustness values are less extreme and closer to the one of a uniform primary extinctions distribution.</p>
 <p>Using the LBM, we can compute a robustness where the extinction distribution is dependent of the block memberships of the primary species. For example, by ordering blocks by their connection probabilities, and extinguishing species base on this order, we obtain:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
