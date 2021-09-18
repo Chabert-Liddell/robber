@@ -24,22 +24,20 @@ A list of the LBM parameters. The list is set
 Estimate the parameters of a LBM
 }
 \examples{
-con <- matrix(c(.5,.3,.3,.1), 2, 2)
-pi  <- c(.25,.75)
-rho <- c(1/3, 2/3)
-nr <- 50
-nc <- 30
 # When the size of the model is unknown:
-A <- simulate_lbm(con, pi, rho, nr, nc)$A
-param <- get_lbm_param(A, ncores = 1L)
+data("seeddispersal")
+param <- get_lbm_param(seeddispersal, ncores = 1L)
 do.call(auc_robustness_lbm, param)
 
 # For a fixed number of blocks (useful for comparison)
-param <- get_lbm_param(A, model_size = c(1, 3), ncores = 1L)
+param <- get_lbm_param(seeddispersal, model_size = c(1, 3), ncores = 1L)
 do.call(auc_robustness_lbm, param)
 
 # For data with missing observations
-A[sample(seq_len(nr), 5), sample(seq_len(nc), 10)] <- NA
+\donttest{
+A <- seeddispersal
+A[sample(seq_len(nrow(A)), 5),
+  sample(seq_len(ncol(A)), 10)] <- NA
 param <- get_lbm_param(A, nbCores = 1L)
-do.call(auc_robustness_lbm, param)
+do.call(auc_robustness_lbm, param)}
 }

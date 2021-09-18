@@ -6,19 +6,10 @@
 * Windows R-Release (R-hub) 
 * Feodora Linux, R-devel (R-hub)
 
+
+
 ## R CMD check results
 
-0 errors | 0 warnings | 2 notes
+0 errors | 0 warnings | 1 note
 
 * This is a new release.
-
-* Possibly misspelled words in DESCRIPTION:
-  connectance (16:21)
-  preprint (18:22)
-  
-
-Note for Windows R-devel (R-hub) 
-* checking examples ... NOTE
-Examples with CPU (user + system) or elapsed time > 5s
-              user system elapsed
-get_lbm_param 2.53   0.04    6.47
