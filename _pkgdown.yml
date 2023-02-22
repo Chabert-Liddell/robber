@@ -24,7 +24,10 @@ navbar:
     - icon: fa-github
       href: https://github.com/Chabert-Liddell
 articles:
-  topological-analysis: topological-analysis.html
+- title: Tutorial and topolgical analysis of robustness
+  contents:
+  - topological-analysis
+  - plot_article
 reference:
 - title: "Robustness functions"
   contents:
