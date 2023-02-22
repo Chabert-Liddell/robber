@@ -1,6 +1,6 @@
 Package: robber
 Title: Using Block Model to Estimate the Robustness of Ecological Network
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: 
     person(given = "Saint-Clair",
            family = "Chabert-Liddell",
