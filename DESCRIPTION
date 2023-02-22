@@ -9,7 +9,7 @@ Authors@R:
            comment = c(ORCID = "0000-0001-5604-7308"))
 Description: Implementation of a variety of methods to compute
     the robustness of ecological interaction networks with binary interactions 
-    as described in <arXiv:1910.10512>. In particular, using the Stochastic 
+    as described in <doi:10.1002/env.2709>. In particular, using the Stochastic 
     Block Model and its bipartite counterpart, the Latent Block Model to put a 
     parametric model on the network, allows the comparison of the robustness of 
     networks differing in species richness and number of interactions. It also
@@ -40,8 +40,7 @@ Suggests:
     spelling,
     testthat,
     tibble,
-    tidyr,
-    tidyverse
+    tidyr
 VignetteBuilder: 
     knitr
 Encoding: UTF-8

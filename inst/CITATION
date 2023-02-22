@@ -1,14 +1,17 @@
 citHeader("To cite robber in publications use:")
 
 citEntry(
-  entry    = "misc",
+  entry    = "Article",
   title    = "Impact of the mesoscale structure of a bipartite ecological interaction network on its robustness through a probabilistic modeling",
   author   = personList(as.person("Saint-Clair Chabert-Liddell"),
     as.person("Pierre Barbillon"), as.person("Sophie Donnet")),
-  eprint   = "2106.06348",
-  year     = "2021",
-  archivePrefix="arXiv",
+  journal  = "Environmetrics",
+  doi      = "10.1002/env.2709",
+  year     = "2022",
+  number   = "2",
+  volume   = "33",
+  pages     = "e2709",
   textVersion = paste(
-"Chabert-Liddell, Saint-Clair, P. Barbillon and S. Donnet.\n", "Impact of the mesoscale structure of a bipartite ecological interaction network on its robustness through a probabilistic modeling.\n", "(2021).\n", "arXiv preprint arXiv:2106.06348."
+"Chabert-Liddell, S.-C., Barbillon, P., & Donnet, S. (2022)\n", "Impact of the mesoscale structure of a bipartite ecological interaction network on its robustness through a probabilistic modeling.\n", "Environmetrics, 33(2), e2709.\n", "https://doi.org/10.1002/env.2709"
 )
 )
