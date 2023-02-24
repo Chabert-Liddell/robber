@@ -1,5 +1,5 @@
 # robber 0.2.3
-* Removed some unneeded dependence.
+* Removed some unneeded dependences.
 
 # robber 0.2.2
 * Changed some examples to deal with real data instead of simulated data.
