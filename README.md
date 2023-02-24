@@ -15,7 +15,7 @@ ROBustness using Blockmodel for Ecological network R package
 
 Implementation of a variety of methods to compute
     the robustness of ecological interaction networks with binary interactions 
-    as described in [Chabert-Liddel, Barbillon and Donnet (2022)](https://doi.org/10.1002/env.2709). In particular, using the Stochastic 
+    as described in [Chabert-Liddell, Barbillon and Donnet (2022)](https://doi.org/10.1002/env.2709). In particular, using the Stochastic 
     Block Model and its bipartite counterpart, the Latent Block Model to put a 
     parametric model on the network, allows the comparison of the robustness of 
     networks differing in species richness and number of interactions. It also

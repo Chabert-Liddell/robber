@@ -1,7 +1,4 @@
 #' @title Compute the Conditional variance of the AUC of the LBM Robustness
-#'
-#'
-#'
 #' @inheritParams auc_robustness_lbm
 #'
 #' @return A numeric, the variance
@@ -62,9 +59,6 @@ var_auc_unif_lbm <- function(con, pi, rho, nr, nc) {
 
 
 #' @title Compute the Conditional variance of the LBM Robustness term by term
-#'
-#'
-#'
 #' @inheritParams auc_robustness_lbm
 #'
 #' @return A vector, the variance after m extinctions

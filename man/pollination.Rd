@@ -8,7 +8,7 @@
 A matrix of binary entries with 17 rows and 51 columns
 }
 \source{
-\url{http://www.web-of-life.es/}
+\url{https://www.web-of-life.es/}
 }
 \usage{
 pollination

@@ -1,10 +1,11 @@
 ## Test environments
-* local R installation (Ubuntu 18.04), R 4.1.1
-* ubuntu 16.04 (on travis-ci), R 4.1.1
+* local R installation (Ubuntu 22.04), R 4.2.2
 * win-builder (devel)
-* Windows R-devel (R-hub) 
-* Windows R-Release (R-hub) 
-* Feodora Linux, R-devel (R-hub)
+* mac OS R-devel (gha) 
+* Windows-latest R-elease (gha) 
+* ubuntu-lastest, R-release (gha)
+* ubuntu-lastest, R-devel (gha)
+* ubuntu-lastest, R-oldrelease (gha)
 
 
 
@@ -12,4 +13,11 @@
 
 0 errors | 0 warnings | 1 note
 
-* This is a new release.
+
+ Maintainer: 'Saint-Clair Chabert-Liddell <academic@chabert-liddell.com>'
+  
+  New maintainer:
+    Saint-Clair Chabert-Liddell <academic@chabert-liddell.com>
+  Old maintainer(s):
+    Saint-Clair Chabert-Liddell
+      <saint-clair.chabert-liddell@agroparistech.fr>
