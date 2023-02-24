@@ -8,7 +8,7 @@
 A matrix of binary entries with 27 rows and 26 columns
 }
 \source{
-\url{http://www.web-of-life.es/}
+\url{https://www.web-of-life.es/}
 
 \url{https://datadryad.org/stash/dataset/doi:10.5061/dryad.jf3tj}
 }

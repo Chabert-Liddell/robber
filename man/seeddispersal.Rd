@@ -8,7 +8,7 @@
 A matrix of binary entries with 36 rows and 19 columns
 }
 \source{
-\url{http://www.web-of-life.es/}
+\url{https://www.web-of-life.es/}
 
 \url{https://conbio.org/publications/conservation-biology}
 }

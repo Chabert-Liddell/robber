@@ -1,9 +1,9 @@
 citHeader("To cite robber in publications use:")
 
-citEntry(
-  entry    = "Article",
+bibentry(
+  bibtype    = "Article",
   title    = "Impact of the mesoscale structure of a bipartite ecological interaction network on its robustness through a probabilistic modeling",
-  author   = personList(as.person("Saint-Clair Chabert-Liddell"),
+  author   = c(as.person("Saint-Clair Chabert-Liddell"),
     as.person("Pierre Barbillon"), as.person("Sophie Donnet")),
   journal  = "Environmetrics",
   doi      = "10.1002/env.2709",
