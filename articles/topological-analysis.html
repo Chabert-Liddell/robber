@@ -156,20 +156,20 @@ host-parasite network and the default uniform extinction sequence:</p>
 <span><span class="co">#&gt; [1] 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $fun</span></span>
-<span><span class="co">#&gt;  [1] 1.0000000 0.9898718 0.9825641 0.9744872 0.9648718 0.9555128 0.9458974</span></span>
-<span><span class="co">#&gt;  [8] 0.9375641 0.9255128 0.9137179 0.9016667 0.8888462 0.8741026 0.8575641</span></span>
-<span><span class="co">#&gt; [15] 0.8414103 0.8233333 0.8057692 0.7834615 0.7551282 0.7287179 0.6967949</span></span>
-<span><span class="co">#&gt; [22] 0.6610256 0.6253846 0.5739744 0.5088462 0.4206410 0.2860256 0.0000000</span></span>
+<span><span class="co">#&gt;  [1] 1.0000000 0.9892308 0.9807692 0.9712821 0.9610256 0.9520513 0.9423077</span></span>
+<span><span class="co">#&gt;  [8] 0.9307692 0.9200000 0.9066667 0.8944872 0.8814103 0.8682051 0.8523077</span></span>
+<span><span class="co">#&gt; [15] 0.8379487 0.8198718 0.8007692 0.7769231 0.7511538 0.7229487 0.6924359</span></span>
+<span><span class="co">#&gt; [22] 0.6557692 0.6108974 0.5570513 0.4988462 0.4142308 0.2842308 0.0000000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $sd</span></span>
-<span><span class="co">#&gt;  [1] 0.00000000 0.02088898 0.02690807 0.03137718 0.03759946 0.03989090</span></span>
-<span><span class="co">#&gt;  [7] 0.04257561 0.04439875 0.04738291 0.04939907 0.05319894 0.05481731</span></span>
-<span><span class="co">#&gt; [13] 0.06007994 0.06608033 0.06900446 0.07290736 0.07902486 0.08405132</span></span>
-<span><span class="co">#&gt; [19] 0.09483053 0.09809960 0.10816804 0.11410288 0.12084499 0.13093553</span></span>
-<span><span class="co">#&gt; [25] 0.13539193 0.15403572 0.16453414 0.00000000</span></span>
+<span><span class="co">#&gt;  [1] 0.00000000 0.02139021 0.02678398 0.03151485 0.03694908 0.04123921</span></span>
+<span><span class="co">#&gt;  [7] 0.04409480 0.04676298 0.04822552 0.05000379 0.05306858 0.05657378</span></span>
+<span><span class="co">#&gt; [13] 0.06153632 0.06316039 0.06651874 0.07058100 0.07602642 0.08539645</span></span>
+<span><span class="co">#&gt; [19] 0.09124273 0.09908940 0.10632462 0.11333507 0.11721211 0.12709460</span></span>
+<span><span class="co">#&gt; [25] 0.13698311 0.15389647 0.17282834 0.00000000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $auc</span></span>
-<span><span class="co">#&gt; [1] 0.8008405</span></span>
+<span><span class="co">#&gt; [1] 0.7953181</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; attr(,"class")</span></span>
 <span><span class="co">#&gt; [1] "robber"</span></span>
@@ -258,7 +258,7 @@ Block Model parameters.</p>
 <p>As we can see the two robustness statistics are very close:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rob_emp_unif</span><span class="op">$</span><span class="va">auc</span></span>
-<span><span class="co">#&gt; [1] 0.8008405</span></span>
+<span><span class="co">#&gt; [1] 0.7953181</span></span>
 <span><span class="va">rob_lbm_unif</span><span class="op">$</span><span class="va">auc</span></span>
 <span><span class="co">#&gt; [1] 0.808319</span></span></code></pre></div>
 <p>And we can plot the two curves (the empirical one in blue and the LBM
@@ -304,9 +304,9 @@ about a worst-case and best-case scenario.</p>
 <code class="sourceCode R"><span><span class="va">rob_emp_dec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"decreasing"</span><span class="op">)</span></span>
 <span><span class="va">rob_emp_inc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"increasing"</span><span class="op">)</span></span>
 <span><span class="va">rob_emp_dec</span><span class="op">$</span><span class="va">auc</span></span>
-<span><span class="co">#&gt; [1] 0.5802991</span></span>
+<span><span class="co">#&gt; [1] 0.580114</span></span>
 <span><span class="va">rob_emp_inc</span><span class="op">$</span><span class="va">auc</span></span>
-<span><span class="co">#&gt; [1] 0.8923504</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.8915432</span></span></code></pre></div>
 <p>The above method is very sensitive to the network sampling, in
 particular for increasing connection. One way to counter that is to
 consider that the order of extinction is a function of the degree, for
@@ -317,9 +317,9 @@ example it might depends linearly on it.</p>
 <span><span class="va">rob_emp_inc_lin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/robustness_emp.html">robustness_emp</a></span><span class="op">(</span><span class="va">hostparasite</span>, ext_seq <span class="op">=</span> <span class="st">"increasing"</span>, </span>
 <span>                                  method <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span></span>
 <span><span class="va">rob_emp_dec_lin</span><span class="op">$</span><span class="va">auc</span></span>
-<span><span class="co">#&gt; [1] 0.6963913</span></span>
+<span><span class="co">#&gt; [1] 0.6971985</span></span>
 <span><span class="va">rob_emp_inc_lin</span><span class="op">$</span><span class="va">auc</span></span>
-<span><span class="co">#&gt; [1] 0.8467236</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.8429107</span></span></code></pre></div>
 <p>As we can see the obtained robustness values are less extreme and
 closer to the one of a uniform primary extinctions distribution.</p>
 <p>Using the LBM, we can compute a robustness where the extinction
