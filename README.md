@@ -8,7 +8,7 @@
 [![R build
 status](https://github.com/Chabert-Liddell/robber/workflows/R-CMD-check/badge.svg)](https://github.com/Chabert-Liddell/robber/actions)
 [![Codecov test
-coverage](https://codecov.io/gh/Chabert-Liddell/robber/branch/master/graph/badge.svg)](https://codecov.io/gh/Chabert-Liddell/robber?branch=master)
+coverage](https://app.codecov.io/gh/Chabert-Liddell/robber/branch/master/graph/badge.svg)](https://app.codecov.io/gh/Chabert-Liddell/robber?branch=master)
 <!-- badges: end -->
 
 ROBustness using Blockmodel for Ecological network R package

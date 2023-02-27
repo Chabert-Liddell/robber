@@ -8,6 +8,14 @@
 * ubuntu-lastest, R-oldrelease (gha)
 
 
+## Comments
+
+Corrected as requested the following Note from previous submission:
+  Found the following (possibly) invalid URLs:
+    URL: https://codecov.io/gh/Chabert-Liddell/robber?branch=master (moved to https://app.codecov.io/gh/Chabert-Liddell/robber?branch=master)
+      From: README.md
+      Status: 200
+      Message: OK
 
 ## R CMD check results
 
