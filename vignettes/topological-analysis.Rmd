@@ -443,7 +443,7 @@ prt <- robust_topology %>%
   facet_grid(Topology  ~ Extinction) +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                                 midpoint = rob_er, 
-                                guide_colorbar(title = "R")) +
+                                guide = guide_colorbar(title = "R")) +
   annotate(x = 15, y = .5, geom = "point", col = "black", size = 3) +
   annotate(x = 15, y = .55, geom = "text", label = "ER",
                     col = "black", size = 3) +
