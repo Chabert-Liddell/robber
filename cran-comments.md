@@ -1,21 +1,13 @@
 ## Test environments
-* local R installation (Ubuntu 22.04), R 4.2.2
-* win-builder (devel)
-* mac OS R-devel (gha) 
-* Windows-latest R-elease (gha) 
-* ubuntu-lastest, R-release (gha)
-* ubuntu-lastest, R-devel (gha)
-* ubuntu-lastest, R-oldrelease (gha)
-
+* ububtu-latest (oldrel-1)
+* ubuntu-latest (release)
+* macos-latest (release)
+* wintdos-latest (release)
+* ubuntu-latest (devel)
 
 ## Comments
 
-Corrected as requested the following Note from previous submission:
-  Found the following (possibly) invalid URLs:
-    URL: https://codecov.io/gh/Chabert-Liddell/robber?branch=master (moved to https://app.codecov.io/gh/Chabert-Liddell/robber?branch=master)
-      From: README.md
-      Status: 200
-      Message: OK
+Minor change to the vignette to agree with the next ggplot2 3.5.0 release.
 
 ## R CMD check results
 
@@ -23,9 +15,3 @@ Corrected as requested the following Note from previous submission:
 
 
  Maintainer: 'Saint-Clair Chabert-Liddell <academic@chabert-liddell.com>'
-  
-  New maintainer:
-    Saint-Clair Chabert-Liddell <academic@chabert-liddell.com>
-  Old maintainer(s):
-    Saint-Clair Chabert-Liddell
-      <saint-clair.chabert-liddell@agroparistech.fr>
