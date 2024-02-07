@@ -1,3 +1,6 @@
+# robber 0.2.4
+* Patch for new `ggplot2` version compatibility.
+
 # robber 0.2.3
 * Removed some unneeded dependences.
 
